@@ -106,10 +106,10 @@ class Brandname extends \yii\db\ActiveRecord
             ->andWhere(['brandname.status' => Brandname::STATUS_ACTIVE])
             ->andWhere('brandname.expired_at >= :t', [':t' => time()])
             ->andWhere(['user.id' => Yii::$app->user->id])->one();
-        if($brandname){
+        if ($brandname) {
             return [$brandname->id => $brandname->brandname];
-        }else{
-            return $brandname;
+        } else {
+            return null;
         }
     }
 

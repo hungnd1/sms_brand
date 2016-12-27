@@ -28,7 +28,11 @@ use yii\helpers\Html;
 
     <?= $form->field($model, 'campain_name')->textInput(['maxlength' => 100, 'class' => 'input-circle']) ?>
     <?= $form->field($model, 'type')->dropDownList(\common\models\HistoryContact::getListType(), ['class' => 'input-circle']) ?>
-    <?= $form->field($model, 'brandname_id')->dropDownList(\common\models\Brandname::getBrandname(),array('prompt'=>'Chọn brandname')) ?>
+    <?php if (\common\models\Brandname::getBrandname()) { ?>
+        <?= $form->field($model, 'brandname_id')->dropDownList(\common\models\Brandname::getBrandname(), array('prompt' => 'Chọn brandname')) ?>
+    <?php } else { ?>
+        <?= $form->field($model, 'brandname_id')->dropDownList(ArrayHelper::map(['empty'=>'Chọn brandname'], 'id', 'value')) ?>
+    <?php } ?>
     <?php
     echo $form->field($model, 'template_id')->widget(Select2::classname(), [
         'data' => \yii\helpers\ArrayHelper::map(\common\models\TemplateSms::findAll(['status' => \common\models\TemplateSms::STATUS_ACTIVE]), 'id', 'template_content'),
@@ -87,7 +91,7 @@ use yii\helpers\Html;
     <?= $form->field($model, 'content', ['options' => ['class' => 'col-xs-12',
         'onkeyup' => "countChar();"]])->textarea(['rows' => 6]) ?>
     <?php
-    if($type == 1) {
+    if ($type == 1) {
 
         $data = ArrayHelper::map(Contact::find()
             ->andWhere(['status' => Contact::STATUS_ACTIVE])
@@ -101,11 +105,11 @@ use yii\helpers\Html;
                 'allowClear' => true
             ],
         ])->label('Chọn danh bạ');
-    }else{ ?>
+    } else { ?>
         <div class="form-body">
             <div class="row">
                 <div class="col-md-offset-2 col-md-10 text-right">
-                    <?= Html::a(Yii::t('app',"Tải file mẫu"), $model->getTemplateFile()) ?>
+                    <?= Html::a(Yii::t('app', "Tải file mẫu"), $model->getTemplateFile()) ?>
                 </div>
             </div>
             <div class="row">
@@ -125,7 +129,6 @@ use yii\helpers\Html;
             </div>
         </div>
     </div>
-
 
 
     <?php ActiveForm::end(); ?>
