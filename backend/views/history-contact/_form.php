@@ -28,7 +28,7 @@ use yii\helpers\Html;
 
     <?= $form->field($model, 'campain_name')->textInput(['maxlength' => 100, 'class' => 'input-circle']) ?>
     <?= $form->field($model, 'type')->dropDownList(\common\models\HistoryContact::getListType(), ['class' => 'input-circle']) ?>
-    <?= $form->field($model, 'brandname_id')->dropDownList(\common\models\Brandname::getBrandname(), ['class' => 'input-circle']) ?>
+    <?= $form->field($model, 'brandname_id')->dropDownList(\common\models\Brandname::getBrandname(),array('prompt'=>'Chọn brandname')) ?>
     <?php
     echo $form->field($model, 'template_id')->widget(Select2::classname(), [
         'data' => \yii\helpers\ArrayHelper::map(\common\models\TemplateSms::findAll(['status' => \common\models\TemplateSms::STATUS_ACTIVE]), 'id', 'template_content'),
