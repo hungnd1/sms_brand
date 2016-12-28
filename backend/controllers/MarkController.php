@@ -51,7 +51,7 @@ class MarkController extends BaseBEController
     {
         $dataProvider = new ArrayDataProvider();
         $model = new Mark();
-        $classes = Contact::getAllClasses();
+        $classes = Contact::getAllClasses()->all();
         $subjects = Subject::find()->all();
         $dataContact = ArrayHelper::map($classes, 'id', 'contact_name');
         $dataSubject = ArrayHelper::map($subjects, 'id', 'name');

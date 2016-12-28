@@ -296,13 +296,13 @@ $this->registerJs("Layout.init();");
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Tác vụ năm học',
-                    'url' => ['subject/index'],
+                    'url' => ['school-year/index'],
                     'require_auth' => true,
                 ],
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Lịch sử lên lớp',
-                    'url' => ['mark/index'],
+                    'url' => ['history-class-up/index'],
                     'require_auth' => true,
                 ],
             ]
