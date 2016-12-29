@@ -226,4 +226,15 @@ class ContactDetailSearch extends ContactDetail
 
         return $dataProvider;
     }
+
+    /**
+     * @param $contactName
+     * @return int|string
+     * @internal param $contact_name
+     */
+    public static function countContactDetailByContactName($contactName)
+    {
+        $contactId = Contact::findOne(['contact_name' => $contactName]);
+        return ContactDetail::find()->where(['contact_id' => $contactId])->count();
+    }
 }

@@ -55,7 +55,7 @@ class MarkSummaryController extends BaseBEController
         $dataProvider = new ArrayDataProvider();
         $model = new MarkSummary();
         $dataSubject = array();
-        $classes = Contact::getAllClasses();
+        $classes = Contact::getAllClasses()->all();
         $dataContact = ArrayHelper::map($classes, 'id', 'contact_name');
 
         if (count($classes) < 1) {

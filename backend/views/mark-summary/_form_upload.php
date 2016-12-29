@@ -12,12 +12,6 @@ use yii\helpers\Html;
 
 
 <script type="text/javascript">
-
-    function show() {
-        var class_id = $('#mark-class_id').val();
-        alert(class_id);
-    }
-
     function submit_form(action) {
         $('#action').val(action);
         $("#my_form").submit();
