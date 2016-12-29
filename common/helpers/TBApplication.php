@@ -641,6 +641,22 @@ class TBApplication
         $option_type_arr[7]['description']='Ngày sinh';
         return $option_type_arr;
     }
+
+	public static function listVariableUser()
+	{
+		$option_type_arr=array();
+		$option_type_arr[0]['name']='$username$';
+		$option_type_arr[0]['description']='Tài khoản';
+		$option_type_arr[1]['name']='$password$';
+		$option_type_arr[1]['description']='Mật khẩu';
+		$option_type_arr[2]['name']='$sms$';
+		$option_type_arr[2]['description']='Số tin nhắn';
+		$option_type_arr[3]['name']='$dienthoai$';
+		$option_type_arr[3]['description']='Số điện thoại';
+		$option_type_arr[4]['name']='$email$';
+		$option_type_arr[4]['description']='Email';
+		return $option_type_arr;
+	}
     
     /**
      * Chuyển các đầu số về 84

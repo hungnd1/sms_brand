@@ -118,26 +118,22 @@ $this->registerJs("Layout.init();");
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
             'items' => [
                 [
-                    'label' => 'QL quyền',
-                    'items' => [
-                        [
-                            'encode' => false,
-                            'label' => '<i class="icon-key"></i> QL quyền trang backend',
-                            'url' => ['rbac-backend/permission'],
-                            'require_auth' => true,
-                        ],
-                    ]
+                    'label' => '<i class="icon-key"></i> QL Cấu hình tin nhắn',
+                    'encode' => false,
+                    'url' => ['config-system/index'],
+                    'require_auth' => true,
                 ],
                 [
-                    'label' => 'QL nhóm quyền',
-                    'items' => [
-                        [
-                            'encode' => false,
-                            'label' => '<i class="icon-lock-open"></i> QL nhóm quyền trang backend',
-                            'url' => ['rbac-backend/role'],
-                            'require_auth' => true,
-                        ],
-                    ]
+                    'encode' => false,
+                    'label' => '<i class="icon-key"></i> QL quyền',
+                    'url' => ['rbac-backend/permission'],
+                    'require_auth' => true,
+                ],
+                [
+                    'encode' => false,
+                    'label' => '<i class="icon-lock-open"></i> QL nhóm quyền',
+                    'url' => ['rbac-backend/role'],
+                    'require_auth' => true,
                 ],
             ]
         ],
@@ -193,7 +189,7 @@ $this->registerJs("Layout.init();");
                 ],
                 [
                     'encode' => false,
-                    'label' => '<i class="fa fa-server"></i> Sinh nhật trong tháng '. date('m'),
+                    'label' => '<i class="fa fa-server"></i> Sinh nhật trong tháng ' . date('m'),
                     'url' => ['contact-detail/birthday'],
                     'require_auth' => true,
                 ],
@@ -358,3 +354,4 @@ $this->registerJs("Layout.init();");
 </body>
 </html>
 <?php $this->endPage() ?>
+<!-- Modal -->

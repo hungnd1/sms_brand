@@ -42,7 +42,8 @@ class HistoryContactSearch extends HistoryContact
      */
     public function search($params)
     {
-        $query = HistoryContact::find()->andWhere(['member_by'=>Yii::$app->user->id]);
+        $query = HistoryContact::find()->andWhere(['member_by'=>Yii::$app->user->id])
+        ->andWhere(['is_campaign'=>HistoryContact::IS_CAMPAIGN]);
 
         // add conditions that should always apply here
 

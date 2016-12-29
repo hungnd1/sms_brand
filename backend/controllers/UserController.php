@@ -5,11 +5,16 @@ namespace backend\controllers;
 use api\helpers\Message;
 use common\components\ActionLogTracking;
 use common\components\ActionProtectSuperAdmin;
+use common\helpers\APISMS;
+use common\helpers\FileUtils;
+use common\helpers\TBApplication;
 use common\models\AuthAssignment;
 use common\models\AuthItem;
 use common\models\Brandname;
+use common\models\HistoryContact;
 use common\models\User;
 use common\models\UserActivity;
+use common\models\UserHistory;
 use common\models\UserSearch;
 use kartik\widgets\ActiveForm;
 use Yii;
@@ -149,9 +154,9 @@ class UserController extends BaseBEController
             if ($model->level == User::USER_LEVEL_TKKHACHHANGADMIN || $model->level == User::USER_LEVEL_TKKHACHHANG_DAILY
                 || $model->level == User::USER_LEVEL_TKKHACHHANG_DAILYCAPDUOI || $model->level == User::USER_LEVEL_TKTHANHVIEN_KHACHHANGDAILY
                 || $model->level == User::USER_LEVEL_TKTHANHVIEN_KHADMIN || $model->level == User::USER_LEVEL_TKTHANHVIEN_KHAHHANGDAILYCAPDUOI
-            ){
+            ) {
                 $numbersms = User::find()->andWhere(['created_by' => Yii::$app->user->id])
-                    ->andWhere(['level'=>$model->level])
+                    ->andWhere(['level' => $model->level])
                     ->andWhere('id <> :id', [':id' => $model->id])->all();
                 $numbersms_total = 0; //tong so tin nhan cua thanh vien da co cua khach hang do
                 foreach ($numbersms as $item) {
@@ -463,8 +468,59 @@ class UserController extends BaseBEController
 
     public function actionSend()
     {
-        if (isset($_POST['arr_member'])) {
-            echo '{"status":"ok"}';
+        if (isset($_POST['arr_member']) && isset($_POST['content'])) {
+            $content = $_POST['content'];
+            $user_current = User::findOne(['id' => Yii::$app->user->id]);
+            $brand = Brandname::findOne(['id' => $user_current->brandname_id]);
+            FileUtils::errorLog("*****BAT DAU GUI TIN CHO USER*****");
+            FileUtils::infoLog("*****BAT DAU GUI TIN CHO USER*****");
+            $total_sucess = 0;
+            for ($i = 0; $i < sizeof($_POST['arr_member']); $i++) {
+                FileUtils::errorLog("********Bắt đầu gửi tin nhắn ********");
+                $user = new UserHistory();
+                $user->type = HistoryContact::TYPE_CSKH;
+                $user->brandname_id = $user_current->brandname_id;
+                $user->content = $content;
+                $user->created_at = time();
+                $user->updated_at = time();
+                $user->user_id = $_POST['arr_member'][$i];
+                $user->member_by = Yii::$app->user->id;
+                $phone_number = User::findOne(['id' => $_POST['arr_member'][$i]])->phone_number;
+                $contact_content = HistoryContact::getTemplateUser($content, $_POST['arr_member'][$i]);
+                $contact_content = TBApplication::removesign($contact_content, '');
+                $sotin = strlen($contact_content) / 160;
+                if (strlen($contact_content) >= 0 && strlen($contact_content) < 160)
+                    $sotin = 1;
+                $content_number = round($sotin);
+                $user->content_number = $content_number;
+                $result_send = 0;
+                if ($user_current->number_sms >= $total_sucess) {
+                    $callAPI = new APISMS();
+                    $result_send = $callAPI->sent($brand->brand_username, $brand->brand_password, $brand->brandname, $phone_number, $contact_content, $_POST['arr_member'][$i]);
+                    FileUtils::errorLog(trim($result_send) . " cua sdt " . $phone_number . " co brandname la " . $brand->brandname);
+                }
+                $user->api_sms_id = $result_send;
+                if (trim($result_send) == "0|Success") {
+                    FileUtils::errorLog("Gui tin nhan thanh cong co sdt " . $phone_number . " co brandname la " . $brand->brandname);
+                    $user->history_contact_status = 1;
+                    $total_sucess += $content_number;
+                } else {
+                    $user->history_contact_status = 0;
+                }
+                $user->save(false);
+                FileUtils::errorLog("**********Kết thúc gửi tin nhắn*********");
+            }
+            $user_current->number_sms = $user_current->number_sms - $total_sucess;
+            if ($user_current->save(false)) {
+                FileUtils::errorLog("*****KET THUC THANH CONG  GUI TIN CHO USER*****");
+                FileUtils::infoLog("*****KET THUC THANH CONG GUI TIN CHO USER*****");
+                echo '{"status":"ok"}';
+            } else {
+                FileUtils::errorLog("*****KET THUC THAT BAI  GUI TIN CHO USER*****");
+                FileUtils::infoLog("*****KET THUC THAT BAI GUI TIN CHO USER*****");
+                echo '{"status":"nok"}';
+            }
+
         } else {
             echo '{"status":"nok"}';
         }

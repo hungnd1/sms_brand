@@ -47,7 +47,12 @@ $this->params['breadcrumbs'][] = $this->title;
                             'attribute' => 'contact_name',
                             'value'=>function ($model, $key, $index, $widget) {
                                 /** @var $model \common\models\Contact */
-                                return Html::a($model->contact_name, ['/contact-detail/index', 'id' => $model->id],['class'=>'label label-primary']);
+                                    if(Yii::$app->user->identity->level == \common\models\User::USER_LEVEL_ADMIN || Yii::$app->user->identity->type_kh == \common\models\User::TYPE_KH_DOANHNGHIEP){
+                                        return Html::a($model->contact_name, ['/contact-detail/index', 'id' => $model->id],['class'=>'label label-primary']);
+                                    }else{
+                                        return $model->contact_name;
+                                    }
+
 
                             },
                         ],
