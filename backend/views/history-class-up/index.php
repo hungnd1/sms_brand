@@ -1,7 +1,9 @@
 <?php
 
+use yii\bootstrap\Modal;
 use yii\helpers\Html;
 use kartik\grid\GridView;
+use yii\widgets\Pjax;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\SubjectSearch */
@@ -12,6 +14,18 @@ $this->title = 'Tác vụ năm học';
 $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
 ?>
 
+<script>
+    function showClass(id) {
+        $('#popupClass').modal('show');
+        $.ajax({
+            url: '?r=history-class-up%2Fshow&id=' + id,
+            success: function(data) {
+                $('#myModalContent').html(data);
+            }
+        });
+    }
+</script>
+
 <style>
     .top-notice {
         background-color: #fcfac9;
@@ -20,6 +34,10 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
         margin: 1% 0;
         padding: 5px;
         text-align: center;
+    }
+
+    .modal-header{
+        padding: 10px 10px 0 0;
     }
 </style>
 
@@ -39,8 +57,15 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
             <div class="portlet-body">
 
                 <div class="top-notice">
-                    Năm học hiện tại : 2016 - 2017. Nhà trường đã thực hiện kết thúc năm học 2015 - 2016. Nhà trường
-                    chưa thực hiện kết thúc năm học 2016 - 2017
+                    Năm học hiện tại : <?= date("Y") . ' - ' . (date("Y") + 1) ?>.
+                    Nhà trường đã thực hiện kết thúc năm học <?= (date("Y") - 1) . ' - ' . date("Y") ?>.
+                    Nhà trường
+                    <?php
+                    if ($schoolYearStatus == 0) echo 'chưa bắt đầu';
+                    else if ($schoolYearStatus == 1) echo 'đã bắt đầu';
+                    else echo 'đã kết thúc';
+                    ?>
+                    năm học <?= date("Y") . ' - ' . (date("Y") + 1) ?>
                 </div>
 
                 <div style="margin: 25px 0 25px 0">
@@ -69,7 +94,7 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
                             'class' => '\kartik\grid\DataColumn',
                             'label' => 'Tên lớp cũ',
                             'value' => function ($model) {
-                                return $model->contact_name;
+                                return $model->old_class_name;
                             },
                         ],
                         [
@@ -78,7 +103,7 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
                             'class' => '\kartik\grid\DataColumn',
                             'label' => 'Sĩ số lớp cũ',
                             'value' => function ($model) {
-                                return \common\models\ContactDetailSearch::countContactDetailByContactName($model->contact_name);
+                                return $model->number_old_class_students;
                             },
                         ],
                         [
@@ -87,7 +112,7 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
                             'class' => '\kartik\grid\DataColumn',
                             'label' => 'Tên lớp mới',
                             'value' => function ($model) {
-                                return \common\models\Contact::getNewClassFromOldClass($model->contact_name);
+                                return $model->new_class_name;
 
                             },
                         ],
@@ -97,8 +122,7 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
                             'class' => '\kartik\grid\DataColumn',
                             'label' => 'Sĩ số lớp mới',
                             'value' => function ($model) {
-                                $newClass = \common\models\Contact::getNewClassFromOldClass($model->contact_name);
-                                return \common\models\ContactDetailSearch::countContactDetailByContactName($newClass);
+                                return $model->number_new_class_students;
                             },
                         ],
                         [
@@ -107,13 +131,30 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
                             'class' => '\kartik\grid\DataColumn',
                             'label' => 'Chi tiết',
                             'value' => function ($model) {
-                                return '';
+                                $rs = 'Đã chuyển ' . $model->number_old_class_students .
+                                    ' học sinh từ lớp ' . $model->old_class_name . ' lên lớp ' . $model->new_class_name .
+                                    ' - <a href="javascript:showClass(' . $model->new_class_id . ');" style="color: blue"> Chi tiết</a> <br/>
+                                Lớp ' . $model->old_class_name . ' có 0 học sinh bị lưu ban 
+                                - <a href="javascript:showClass(' . $model->old_class_id . ');" style="color: blue">Chi tiết</a>';
+                                return $rs;
 
                             },
                         ],
                     ],
                 ]); ?>
 
+                <?php
+                Modal::begin([
+                    'header' => '<p style="font-weight: bold; font-size: 20px; margin-left: 10px">Danh sách chi tiết</p>',
+                    'id' => 'popupClass',
+                    'closeButton' => [
+                        'label' => 'Close',
+                        'class' => 'btn btn-danger btn-sm pull-right',
+                    ],
+                ]);
+                echo "<div id='myModalContent'></div>";
+                Modal::end();
+                ?>
             </div>
         </div>
     </div>
