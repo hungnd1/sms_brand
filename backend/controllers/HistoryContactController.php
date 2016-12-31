@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use common\components\ActionLogTracking;
 use common\helpers\APISMS;
+use common\helpers\FileUtils;
 use common\helpers\TBApplication;
 use common\models\Brandname;
 use common\models\ContactDetail;
@@ -91,6 +92,7 @@ class HistoryContactController extends BaseBEController
         if ($model->load(Yii::$app->request->post())) {
             $model->created_at = time();
             $model->updated_at = time();
+            $model->is_campaign = HistoryContact::IS_CAMPAIGN;
             $model->member_by = Yii::$app->user->id;
             $brand = Brandname::findOne(['id' => $model->brandname_id]);
             /** @var $brand Brandname */
@@ -112,6 +114,7 @@ class HistoryContactController extends BaseBEController
                         ->all();
                     $total1 = 0;
                     $total1_success = 0;
+                    FileUtils::errorLog("Bắt đầu gửi tin nhắn");
                     foreach ($contactDetail as $detail) {
                         /** @var $detail ContactDetail */
                         $phone_number = $detail->phone_number;
@@ -126,6 +129,7 @@ class HistoryContactController extends BaseBEController
                         if ($model->type == HistoryContact::TYPE_CSKH && !$model->is_send && $total_sucess <= $max_numbersms && $total1 <= $max_numbersms) {
                             $callAPI = new APISMS();
                             $result_send = $callAPI->sent($brand->brand_username, $brand->brand_password, $brand->brandname, $phone_number, $contact_content, $detail->id);
+                            FileUtils::errorLog(trim($result_send) . " cua sdt " . $phone_number . " co brandname la " . $brand->brandname);
                         }
                         $historyContactAsm = new HistoryContactAsm();
                         $historyContactAsm->history_contact_id = $model->id;
@@ -135,6 +139,7 @@ class HistoryContactController extends BaseBEController
                         $historyContactAsm->content_number = $content_number;
                         $historyContactAsm->api_sms_id = $result_send;
                         if (trim($result_send) == "0|Success") {
+                            FileUtils::errorLog("Gui tin nhan thanh cong co sdt " . $phone_number . " co brandname la " . $brand->brandname);
                             $historyContactAsm->history_contact_status = 1;
                             $total1_success += $content_number;
                         } elseif ($model->type == HistoryContact::TYPE_ADV) {
@@ -175,6 +180,7 @@ class HistoryContactController extends BaseBEController
                             if ($row == 1) {
                                 continue;
                             }
+                            FileUtils::errorLog("Bắt đầu gửi tin nhắn");
                             $modelContact->fullname = $rowData[0][0];
                             $modelContact->email = $rowData[0][1];
                             $modelContact->phone_number = $rowData[0][2];
@@ -205,6 +211,7 @@ class HistoryContactController extends BaseBEController
                             if ($model->type == HistoryContact::TYPE_CSKH && !$model->is_send && $total_sucess <= $max_numbersms) {
                                 $callAPI = new APISMS();
                                 $result_send = $callAPI->sent($brand->brand_username, $brand->brand_password, $brand->brandname, $phone_number, $contact_content, $modelContact->id);
+                                FileUtils::errorLog(trim($result_send) . " cua sdt " . $phone_number . " co brandname la " . $brand->brandname);
                             }
                             $historyContactAsm = new HistoryContactAsm();
                             $historyContactAsm->history_contact_id = $model->id;
@@ -214,6 +221,7 @@ class HistoryContactController extends BaseBEController
                             $historyContactAsm->content_number = $content_number;
                             $historyContactAsm->api_sms_id = $result_send;
                             if (trim($result_send) == "0|Success") {
+                                FileUtils::errorLog("Gui tin nhan thanh cong cua sdt " . $phone_number . " co brandname la " . $brand->brandname);
                                 $historyContactAsm->history_contact_status = 1;
                                 $total_sucess += $content_number;
                             } elseif ($model->type == HistoryContact::TYPE_ADV) {
@@ -237,6 +245,10 @@ class HistoryContactController extends BaseBEController
             $model->total_sms = $total;
             $model->total_success = $total_sucess;
             $model->save(false);
+            $modelUser = User::findOne(['id' => Yii::$app->user->id]);
+            $modelUser->number_sms = $max_numbersms - $total_sucess;
+            $modelUser->save(false);
+            FileUtils::errorLog("**** KET THUC GUI TIN ****");
             return $this->redirect(['index']);
         } else {
             return $this->render('create', [
@@ -303,6 +315,10 @@ class HistoryContactController extends BaseBEController
             ->andWhere('send_schedule >= :t', [':t' => $date_current])
             ->andWhere('send_schedule <= :t1', [':t1' => $date_1])
             ->all();
+        $max_numbersms = User::findOne(['id' => Yii::$app->user->id])->number_sms;
+        $total = 0; // tong tin nhan
+        $total_sucess = 0; // tin nhan success
+        FileUtils::errorLog("**** BAT DAU GUI TIN THEO LICH *****");
         foreach ($history_contact as $history) {
             /** @var $history HistoryContact */
             /** @var  $brandname Brandname */
@@ -314,12 +330,19 @@ class HistoryContactController extends BaseBEController
             foreach ($contact_detail as $item) {
                 /** @var $item ContactDetail */
                 $result_send = 0;
-                if ($history->type == HistoryContact::TYPE_CSKH) {
+                $contact_content = HistoryContact::getTemplateContact($history->content, $item->id);
+                $contact_content = TBApplication::removesign($contact_content, '');
+                $sotin = strlen($contact_content) / 160;
+                if (strlen($contact_content) >= 0 && strlen($contact_content) < 160)
+                    $sotin = 1;
+                $content_number = round($sotin);
+                if ($history->type == HistoryContact::TYPE_CSKH && $total_sucess <= $max_numbersms) {
                     $callAPI = new APISMS();
                     $result_send = $callAPI->sent($brandname->brand_username, $brandname->brand_password, $brandname->brandname, $item->phone_number, $history->content, $item->id);
                 } else {
                     $result_send = 0;
                 }
+                FileUtils::errorLog($result_send . " gui tin nhan co sdt " . $item->phone_number . " voi brandname la : " . $brandname->brandname);
                 $model = HistoryContactAsm::find()
                     ->andWhere(['history_contact_id' => $history->id])
                     ->andWhere(['contact_id' => $item->id])
@@ -327,15 +350,100 @@ class HistoryContactController extends BaseBEController
                 $model->api_sms_id = $result_send;
                 if (trim($result_send) == "0|Success") {
                     $model->history_contact_status = 1;
+                    $total_sucess += $content_number;
                 } elseif ($history->type == HistoryContact::TYPE_ADV) {
                     $model->history_contact_status = -1;
                 } else {
                     $model->history_contact_status = 0;
                 }
-                $model->save(false);
+                if ($total_sucess > $max_numbersms) {
+                    $model->history_contact_status = 0;
+                }
+                if ($model->save(false)) {
+                    $total += $content_number;
+                }
             }
             $history->updated_at = time();
+            $history->total_success = $total_sucess;
             $history->save(false);
+            $modelUser = User::findOne(['id' => Yii::$app->user->id]);
+            $modelUser->number_sms = $max_numbersms - $total_sucess;
+            $modelUser->save(false);
+            FileUtils::errorLog("**** KET THUC GUI TIN NHAN THEO LICH ****");
+        }
+    }
+
+    public function actionSend()
+    {
+        if (isset($_POST['arr_member']) && isset($_POST['content'])) {
+            $content = $_POST['content'];
+            $user_current = User::findOne(['id' => Yii::$app->user->id]);
+            $brand = Brandname::findOne(['id' => $user_current->brandname_id]);
+            FileUtils::errorLog("*****BAT DAU GUI TIN CHO USER*****");
+            FileUtils::infoLog("*****BAT DAU GUI TIN CHO USER*****");
+
+            $history_contact = new HistoryContact();
+            $history_contact->type = HistoryContact::TYPE_CSKH;
+            $history_contact->brandname_id = $user_current->brandname_id;
+            $history_contact->content = $content;
+            $history_contact->campain_name = 'NOT CAMPAIN';
+            $history_contact->created_at = time();
+            $history_contact->updated_at = time();
+            $history_contact->member_by = Yii::$app->user->id;
+            $history_contact->is_campaign = HistoryContact::NOT_CAMPAIGN;
+            $history_contact->save(false);
+            $total_sms = 0;
+            $total_sucess = 0;
+            for ($i = 0; $i < sizeof($_POST['arr_member']); $i++) {
+                FileUtils::errorLog("********Bắt đầu gửi tin nhắn ********");
+                $historyContactAsm = new HistoryContactAsm();
+                $historyContactAsm->history_contact_id = $history_contact->id;
+                $historyContactAsm->contact_id = $_POST['arr_member'][$i];
+                $historyContactAsm->created_at = time();
+                $historyContactAsm->updated_at = time();
+                $phone_number = ContactDetail::findOne(['id' => $_POST['arr_member'][$i]])->phone_number;
+                $contact_content = HistoryContact::getTemplateContact($content, $_POST['arr_member'][$i]);
+                $contact_content = TBApplication::removesign($contact_content, '');
+                $sotin = strlen($contact_content) / 160;
+                if (strlen($contact_content) >= 0 && strlen($contact_content) < 160)
+                    $sotin = 1;
+                $content_number = round($sotin);
+                $historyContactAsm->content_number = $content_number;
+                $result_send = 0;
+                if ($user_current->number_sms >= $total_sucess) {
+                    $callAPI = new APISMS();
+                    $result_send = $callAPI->sent($brand->brand_username, $brand->brand_password, $brand->brandname, $phone_number, $contact_content, $_POST['arr_member'][$i]);
+                    FileUtils::errorLog(trim($result_send) . " cua sdt " . $phone_number . " co brandname la " . $brand->brandname);
+                }
+                $historyContactAsm->api_sms_id = $result_send;
+                if (trim($result_send) == "0|Success") {
+                    FileUtils::errorLog("Gui tin nhan thanh cong co sdt " . $phone_number . " co brandname la " . $brand->brandname);
+                    $historyContactAsm->history_contact_status = 1;
+                    $total_sucess += $content_number;
+                } else {
+                    $historyContactAsm->history_contact_status = 0;
+                }
+                $total_sms += $content_number;
+                $historyContactAsm->save(false);
+                FileUtils::errorLog("**********Kết thúc gửi tin nhắn*********");
+            }
+            $model = HistoryContact::findOne(['id' => $history_contact->id]);
+            $model->total_success = $total_sucess;
+            $model->total_sms = $total_sms;
+            $model->save(false);
+            $user_current->number_sms = $user_current->number_sms - $total_sucess;
+            if ($user_current->save(false)) {
+                FileUtils::errorLog("*****KET THUC THANH CONG  GUI TIN CHO USER*****");
+                FileUtils::infoLog("*****KET THUC THANH CONG GUI TIN CHO USER*****");
+                echo '{"status":"ok"}';
+            } else {
+                FileUtils::errorLog("*****KET THUC THAT BAI  GUI TIN CHO USER*****");
+                FileUtils::infoLog("*****KET THUC THAT BAI GUI TIN CHO USER*****");
+                echo '{"status":"nok"}';
+            }
+
+        } else {
+            echo '{"status":"nok"}';
         }
     }
 }

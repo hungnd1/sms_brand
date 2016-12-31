@@ -19,6 +19,7 @@ use Yii;
  * @property integer $member_by
  * @property integer $total_sms
  * @property integer $total_success
+ * @property integer $is_campaign
  */
 class HistoryContact extends \yii\db\ActiveRecord
 {
@@ -38,6 +39,9 @@ class HistoryContact extends \yii\db\ActiveRecord
     const STATUS_SUCCESS = 1;
     const STATUS_ERROR = 0;
 
+    const IS_CAMPAIGN = 1;
+    const NOT_CAMPAIGN = 0;
+
     public static function tableName()
     {
         return 'history_contact';
@@ -50,7 +54,7 @@ class HistoryContact extends \yii\db\ActiveRecord
     {
         return [
             [['content', 'campain_name', 'brandname_id', 'contact_id'], 'required', 'message' => '{attribute} không được để trống', 'on' => 'admin_create_update'],
-            [['type', 'brandname_id', 'total_sms','total_success', 'contact_id', 'is_send', 'template_id', 'created_at', 'updated_at', 'member_by'], 'integer'],
+            [['type', 'brandname_id', 'is_campaign', 'total_sms', 'total_success', 'contact_id', 'is_send', 'template_id', 'created_at', 'updated_at', 'member_by'], 'integer'],
             [['content', 'campain_name', 'send_schedule'], 'string', 'max' => 1024],
             [['uploadedFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'xls', 'maxFiles' => 1],
             [['errorFile'], 'safe'],
@@ -137,13 +141,28 @@ class HistoryContact extends \yii\db\ActiveRecord
         } else {
             $contact_content = str_replace('$gioitinh$', 'Nu', $contact_content);
         }
-        $contact_content = str_replace('$dienthoai$', $items->phone_number, $contact_content);
         $contact_content = str_replace('$diachi$', $items->address, $contact_content);
         $contact_content = str_replace('$congty$', $items->company, $contact_content);
         if ($items->birthday != 0)
             $contact_content = str_replace('$ngaysinh$', $birthday, $contact_content);
         else
             $contact_content = str_replace('$ngaysinh$', '', $contact_content);
+        return $contact_content;
+    }
+
+
+    public static function getTemplateUser($contact_content, $user_id)
+    {
+        $items = \common\models\User::findOne(['id' => $user_id]);
+        /** @var $items \common\models\User */
+
+        $contact_content = str_replace('$username$', $items->username, $contact_content);
+        $contact_content = str_replace('$password$', $items->password_reset_token, $contact_content);
+        $contact_content = str_replace('$email$', $items->email, $contact_content);
+        $contact_content = str_replace('$dienthoai$', $items->phone_number, $contact_content);
+
+        $contact_content = str_replace('$sms$', $items->number_sms, $contact_content);
+
         return $contact_content;
     }
 
