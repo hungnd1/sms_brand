@@ -27,6 +27,7 @@ class SMSBrandUtil
             }
             $result[$grade] = 'Khối '. $grade;
         }
+        ksort($result);
         return $result;
     }
 }

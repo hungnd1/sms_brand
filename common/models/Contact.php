@@ -15,11 +15,15 @@ use Yii;
  * @property integer $updated_at
  * @property integer $path
  * @property integer $created_by
+ * @property integer $school_year_status
  */
 class Contact extends \yii\db\ActiveRecord
 {
     const STATUS_ACTIVE = 10;
     const STATUS_INACTIVE = 0;
+    const NONE_START_SCHOOL_YEAR = 0;
+    const START_SCHOOL_YEAR = 1;
+    const END_SCHOOL_YEAR = 2;
     public $file;
 
     /**
@@ -43,7 +47,7 @@ class Contact extends \yii\db\ActiveRecord
         $user_parent = User::findOne($user->created_by);
 
         $dataContact = Contact::find()
-            ->where(['created_by' => [$user->id, is_null($user_parent) ? '' : $user_parent->id]])
+            ->where(['created_by' => [$user->id, is_null($user_parent) ? '' : $user_parent->id], 'status' => Contact::STATUS_ACTIVE])
             ->andWhere(['not', ['path' => null]]);
 
         if (!is_null($class) && !strcmp($class, "") == 0) {
@@ -58,15 +62,33 @@ class Contact extends \yii\db\ActiveRecord
 
     /**
      * @param null $oldClass
-     * @return mixed|string|void
+     * @return mixed|string
      */
     public static function getNewClassFromOldClass($oldClass = null)
     {
-        $newClass = 'Đã_tốt_nghiệp';
-        if (is_null($oldClass)) return;
+        if (is_null($oldClass)) return '';
+
+        $newClass = 'Học sinh tốt nghiệp';
+        $grade = self::getGradeByClassName($oldClass);
+
+        if ($grade < 12) {
+            $newClass = str_replace($grade . '', ($grade + 1) . '', $oldClass);
+        }
+
+        return $newClass;
+    }
+
+
+    /**
+     * @param $className
+     * @return int
+     */
+    public static function getGradeByClassName($className)
+    {
+        if (is_null($className)) return 0;
 
         $grade = '';
-        $arrGrade = str_split($oldClass);
+        $arrGrade = str_split($className);
         for ($i = 0; $i < count($arrGrade); $i++) {
             if (ord($arrGrade[$i]) >= ord('0') && ord($arrGrade[$i]) <= ord('9')) {
                 $grade = $grade . $arrGrade[$i];
@@ -74,13 +96,7 @@ class Contact extends \yii\db\ActiveRecord
                 break;
             }
         }
-
-        $grade = intval($grade);
-        if ($grade < 12) {
-            $newClass = str_replace($grade . '', ($grade + 1) . '', $oldClass);
-        }
-
-        return $newClass;
+        return intval($grade);
     }
 
     /**
@@ -91,7 +107,7 @@ class Contact extends \yii\db\ActiveRecord
         return [
             [['contact_name'], 'required', 'message' => '{attribute} không được để trống', 'on' => 'admin_create_update'],
             [['description', 'file'], 'string'],
-            [['status', 'created_at', 'updated_at', 'path', 'created_by'], 'integer'],
+            [['status', '$school_year_status', 'created_at', 'updated_at', 'path', 'created_by'], 'integer'],
             [['contact_name'], 'string', 'max' => 500],
         ];
     }

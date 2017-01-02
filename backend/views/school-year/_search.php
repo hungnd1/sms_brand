@@ -24,6 +24,11 @@ $js = <<<JS
        $('#my_form').attr('action', '/sms_brand/backend/web/index.php?r=school-year%2Fend-school-year');
        $("#my_form").submit();
     });
+
+    $('#button_start_school_year').click(function(){
+       $('#my_form').attr('action', '/sms_brand/backend/web/index.php?r=school-year%2Fstart-school-year');
+       $("#my_form").submit();
+    });
 JS;
 $this->registerJs($js, \yii\web\View::POS_READY);
 ?>
@@ -63,6 +68,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                     ])->label('Theo lớp');
                     ?>
                 </td>
+                <td><?= Html::button('Bắt đầu năm học', ['class' => 'btn btn-primary', 'style' => 'margin: 10px 10px 0 0', 'id' => 'button_start_school_year']) ?></td>
                 <td><?= Html::button('Kết thúc năm học', ['class' => 'btn btn-primary', 'style' => 'margin: 10px 0 0 0', 'id' => 'button_end_school_year']) ?></td>
             </tr>
         </table>

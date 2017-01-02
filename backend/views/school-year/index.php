@@ -1,5 +1,6 @@
 <?php
 
+use yii\bootstrap\Modal;
 use yii\helpers\Html;
 use kartik\grid\GridView;
 
@@ -39,8 +40,15 @@ $this->params['breadcrumbs'][] = 'Công việc trong năm';
             <div class="portlet-body">
 
                 <div class="top-notice">
-                    Năm học hiện tại : 2016 - 2017. Nhà trường đã thực hiện kết thúc năm học 2015 - 2016. Nhà trường
-                    chưa thực hiện kết thúc năm học 2016 - 2017
+                    Năm học hiện tại : <?= date("Y") . ' - ' . (date("Y") + 1) ?>.
+                    Nhà trường đã thực hiện kết thúc năm học <?= (date("Y") - 1) . ' - ' . date("Y") ?>.
+                    Nhà trường
+                    <?php
+                    if ($schoolYearStatus == 0) echo 'chưa bắt đầu';
+                    else if ($schoolYearStatus == 1) echo 'đã bắt đầu';
+                    else echo 'đã kết thúc';
+                    ?>
+                    năm học <?= date("Y") . ' - ' . (date("Y") + 1) ?>
                 </div>
 
                 <div style="margin: 25px 0 25px 0">
@@ -66,12 +74,32 @@ $this->params['breadcrumbs'][] = 'Công việc trong năm';
                         ],
                         [
                             'format' => 'raw',
-                            'width' => '95%',
+                            'width' => '10%',
                             'class' => '\kartik\grid\DataColumn',
-                            'attribute' => 'Lớp',
+                            'label' => 'Lớp',
                             'value' => function ($model) {
                                 return $model->contact_name;
+                            },
+                        ],
 
+                        [
+                            'format' => 'raw',
+                            'width' => '85%',
+                            'class' => '\kartik\grid\DataColumn',
+                            'label' => 'Trạng thái',
+                            'value' => function ($model) {
+                                $rs = '<p>Đã cập nhập danh sách học sinh</p>';
+                                $numStudents = \common\models\ContactDetailSearch::countContactDetailByContactName($model->contact_name);
+                                if($numStudents==0){
+                                    $rs = '<p>Chưa cập nhập danh sách học sinh</p>';
+                                }
+                                if ($model->school_year_status == 0) $rs = $rs . '<p>Chưa bắt đầu';
+                                else if ($model->school_year_status == 1) $rs = $rs . '<p>Đã bắt đầu';
+                                else $rs = $rs . '<p>Đã kết thúc';
+
+                                $rs = $rs . ' năm học</p>';
+
+                                return $rs;
                             },
                         ],
                     ],
