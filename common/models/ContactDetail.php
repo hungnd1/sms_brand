@@ -32,8 +32,9 @@ class ContactDetail extends \yii\db\ActiveRecord
         return 'contact_detail';
     }
 
-
-
+    const TYPE_SEARCH = 1;//TIM KIEM
+    const TYPE_REPORT_DAY = 2; // bao cao theo ngay
+    const TYPE_REPORT_MONTH = 3; //bao cao theo thang
     public $file;
     const GENDER_MALE = 1;
     const GENDER_FEMAILE = 2;

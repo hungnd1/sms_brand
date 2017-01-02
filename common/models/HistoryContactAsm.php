@@ -13,7 +13,7 @@ use Yii;
  * @property integer $created_at
  * @property integer $updated_at
  * @property integer $content_number
- * @property string  $api_sms_id
+ * @property string $api_sms_id
  * @property integer $history_contact_status
  */
 class HistoryContactAsm extends \yii\db\ActiveRecord
@@ -26,16 +26,19 @@ class HistoryContactAsm extends \yii\db\ActiveRecord
         return 'history_contact_asm';
     }
 
+    public $brandname_id;
     public $type;
     public $searchphone;
     public $fromdate;
+    public $month;
     public $todate;
     public $content;
     public $status_;
+    public $network;
     public $created_by;
 
     const STATUS_ALL = 2;
-    const STATUS_SUCCESS  = 1;
+    const STATUS_SUCCESS = 1;
     const STATUS_ERROR = 0;
 
     /**
@@ -45,8 +48,8 @@ class HistoryContactAsm extends \yii\db\ActiveRecord
     {
         return [
             [['history_contact_id', 'contact_id'], 'required'],
-            [['history_contact_id','status_','created_by','type','content_number','history_contact_status', 'contact_id', 'created_at', 'updated_at'], 'integer'],
-            [['api_sms_id','fromdate','todate','searchphone'], 'string'],
+            [['history_contact_id', 'status_', 'brandname_id', 'created_by', 'type', 'content_number', 'history_contact_status', 'contact_id', 'created_at', 'updated_at'], 'integer'],
+            [['api_sms_id','month','network', 'fromdate', 'todate', 'searchphone'], 'string'],
         ];
     }
 
@@ -67,15 +70,16 @@ class HistoryContactAsm extends \yii\db\ActiveRecord
     public static function getListStatus()
     {
         return [
-            self::STATUS_SUCCESS   => 'Đã gửi',
+            self::STATUS_SUCCESS => 'Đã gửi',
             self::STATUS_ERROR => 'Lỗi',
         ];
     }
+
     public static function getListStatusAll()
     {
         return [
             self::STATUS_ALL => 'Tất cả',
-            self::STATUS_SUCCESS   => 'Đã gửi',
+            self::STATUS_SUCCESS => 'Đã gửi',
             self::STATUS_ERROR => 'Lỗi',
         ];
     }
@@ -87,5 +91,12 @@ class HistoryContactAsm extends \yii\db\ActiveRecord
             return $listType[$this->history_contact_status];
         }
         return '';
+    }
+
+    public static function getBrandname($model)
+    {
+        $brandname_id = HistoryContact::findOne(['id' => $model->history_contact_id])->brandname_id;
+        $brandname = Brandname::findOne(['id' => $brandname_id])->brandname;
+        return $brandname;
     }
 }

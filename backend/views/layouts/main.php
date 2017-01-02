@@ -1,5 +1,6 @@
 <?php
 use backend\assets\AppAsset;
+use common\models\ContactDetail;
 use common\models\KodiCategory;
 use common\widgets\Alert;
 use common\widgets\Nav;
@@ -118,14 +119,14 @@ $this->registerJs("Layout.init();");
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
             'items' => [
                 [
-                    'label' => '<i class="icon-key"></i> QL Cấu hình tin nhắn',
+                    'label' => '<i class="icon-key"></i> Quản lý đầu số',
                     'encode' => false,
-                    'url' => ['config-system/index'],
+                    'url' => ['network/index'],
                     'require_auth' => true,
                 ],
                 [
                     'encode' => false,
-                    'label' => '<i class="icon-key"></i> QL quyền',
+                    'label' => '<i class="icon-key"></i> Quản lý quyền',
                     'url' => ['rbac-backend/permission'],
                     'require_auth' => true,
                 ],
@@ -218,11 +219,23 @@ $this->registerJs("Layout.init();");
             ]
         ],
         [
-            'label' => 'Tìm kiếm và lịch sử hoạt động',
+            'label' => 'Báo cáo thông kê và lịch sử,tìm kiếm',
             'url' => 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
             'items' => [
+                [
+                    'encode' => false,
+                    'label' => '<i class="fa fa-server"></i> Báo cáo ngày',
+                    'url' => ['contact-detail/report'],
+                    'require_auth' => true,
+                ],
+                [
+                    'encode' => false,
+                    'label' => '<i class="fa fa-server"></i> Báo cáo tháng',
+                    'url' => ['contact-detail/report-month'],
+                    'require_auth' => true,
+                ],
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Tìm kiếm',

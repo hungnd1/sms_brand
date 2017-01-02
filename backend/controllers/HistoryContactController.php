@@ -183,7 +183,7 @@ class HistoryContactController extends BaseBEController
                             FileUtils::errorLog("Bắt đầu gửi tin nhắn");
                             $modelContact->fullname = $rowData[0][0];
                             $modelContact->email = $rowData[0][1];
-                            $modelContact->phone_number = $rowData[0][2];
+                            $modelContact->phone_number = TBApplication::convert84($rowData[0][2]);
                             $modelContact->address = $rowData[0][3];
                             $modelContact->company = $rowData[0][4];
                             $modelContact->birthday = strtotime(str_replace('/', '-', $rowData[0][5]));

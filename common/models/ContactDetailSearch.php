@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\helpers\TBApplication;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
@@ -181,11 +182,15 @@ class ContactDetailSearch extends ContactDetail
         if ($params) {
             $query = HistoryContactAsm::find()
                 ->innerJoin('history_contact', 'history_contact.id = history_contact_asm.history_contact_id');
+            $query->innerJoin('contact_detail', 'contact_detail.id = history_contact_asm.contact_id');
+            if ($params->brandname_id) {
+                $query->innerJoin('brandname', 'brandname.id = history_contact.brandname_id')
+                    ->andWhere(['brandname.id' => $params->brandname_id]);
+            }
             if ($params->created_by) {
                 $query->andWhere(['history_contact.member_by' => $params->created_by]);
             }
             if ($params->searchphone) {
-                $query->innerJoin('contact_detail', 'contact_detail.id = history_contact_asm.contact_id');
                 $query->andWhere(['like', 'phone_number', $params->searchphone]);
             }
             if ($params->type) {
@@ -210,13 +215,40 @@ class ContactDetailSearch extends ContactDetail
                     $query->andWhere(['history_contact_asm.history_contact_status' => $params->status_]);
                 }
             }
+            if ($params->network) {
+                $number_4 = '';
+                $number_5 = '';
+                for ($i = 0; $i < sizeof($params->network); $i++) {
+                    $network_number = Network::findOne(['id' => $params->network[$i]])->number_network;
+                    $number = explode(',', $network_number);
+                    for ($j = 0; $j < sizeof($number); $j++) {
+                        if (strlen($number[$j]) == 4) {
+                            $number_4 .= $number[$j] . ',';
+                        } else {
+                            $number_5 .= $number[$j] . ',';
+                        }
+                    }
+                }
+                $number_4 = rtrim($number_4, ',');
+                $number_5 = rtrim($number_5, ',');
+                $query->orFilterWhere(['in','SUBSTRING(contact_detail.phone_number,1,4)',$number_4]);
+                $query->orFilterWhere(['in','SUBSTRING(contact_detail.phone_number,1,5)',$number_5]);
+            }
+            if ($params->month) {
+                $created_at_arr_ = explode('/', $params->month);
+                $date = \DateTime::createFromFormat('Y-m-d H:i:s', $created_at_arr_['1'] . '-' . $created_at_arr_['0'] . '-' . 1 . ' 00:00:00');
+                $updated_at_ = strtotime($date->format('m/d/Y'));
+                $create_at_end = $updated_at_ + (60 * 60 * 24 * 30);
+                $query->andWhere(['>=', 'history_contact.updated_at', $updated_at_]);
+                $query->andWhere(['<=', 'history_contact.updated_at', $create_at_end]);
+            }
         } else {
             $query = HistoryContactAsm::find()
                 ->innerJoin('history_contact', 'history_contact.id = history_contact_asm.history_contact_id');
             $query->innerJoin('contact_detail', 'contact_detail.id = history_contact_asm.contact_id');
         }
 
-
+        $query->orderBy(['history_contact_asm.updated_at' => SORT_DESC]);
         // add conditions that should always apply here
 
         $dataProvider = new ActiveDataProvider([
