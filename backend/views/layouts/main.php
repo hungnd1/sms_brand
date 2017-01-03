@@ -272,13 +272,13 @@ $this->registerJs("Layout.init();");
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Tạo mới kỳ thi',
-                    'url' => ['subject/index'],
+                    'url' => ['exam/create'],
                     'require_auth' => true,
                 ],
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Điểm kỳ thi',
-                    'url' => ['mark/index'],
+                    'url' => ['exam/index'],
                     'require_auth' => true,
                 ],
             ]
