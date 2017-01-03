@@ -10,7 +10,7 @@ use yii\helpers\Url;
 /* @var $searchModel common\models\ContactDetailSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Tìm kiếm';
+$this->title = 'Báo cáo ngày';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="row">
@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="portlet-title">
                 <div class="caption">
                     <i class="fa fa-cogs font-green-sharp"></i>
-                    <span class="caption-subject font-green-sharp bold uppercase">Tìm kiếm</span>
+                    <span class="caption-subject font-green-sharp bold uppercase">Báo cáo ngày</span>
                 </div>
                 <div class="tools">
                     <a href="javascript:;" class="collapse">
@@ -29,7 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="portlet-body">
 
                 <div style="margin: 25px 0 25px 0">
-                    <?= $this->render('_search', [
+                    <?= $this->render('_report', [
                         'model' => $model,
                     ]) ?>
                 </div>

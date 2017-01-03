@@ -192,4 +192,13 @@ class HistoryContact extends \yii\db\ActiveRecord
     {
         return Yii::$app->getUrlManager()->getBaseUrl() . '/static/example/contact.xls';
     }
+
+    public static function getContent($model)
+    {
+        return HistoryContact::getTemplateContact(\common\models\HistoryContact::find()
+            ->innerJoin('history_contact_asm', 'history_contact_asm.history_contact_id = history_contact.id')
+            ->innerJoin('contact_detail', 'contact_detail.id = history_contact_asm.contact_id')
+            ->andWhere(['history_contact_asm.id' => $model->id])
+            ->one()->content, $model->contact_id);
+    }
 }

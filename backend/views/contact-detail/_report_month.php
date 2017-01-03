@@ -16,7 +16,7 @@ $dataCreated_by = ArrayHelper::map(\common\models\User::find()->andWhere(['statu
     <?php $form = ActiveForm::begin([
         'type' => ActiveForm::TYPE_VERTICAL,
         'options' => ['enctype' => 'multipart/form-data'],
-        'action' => ['search'],
+        'action' => ['report-month'],
         'fullSpan' => 8,
         'method' => 'post',
     ]); ?>
@@ -35,8 +35,17 @@ $dataCreated_by = ArrayHelper::map(\common\models\User::find()->andWhere(['statu
                         ],
                     ])->label('Thành viên'); ?>
                 </td>
+
                 <td style="padding-right: 10%;width: 200px;">
-                    <?= $form->field($model, 'searchphone')->textInput(['maxlength' => 15, 'class' => 'input-circle', 'width' => '200px;'])->label('Số điện thoại'); ?>
+                    <?php
+                    echo $form->field($model, 'brandname_id')->widget(Select2::className(), [
+                        'data' => \yii\helpers\ArrayHelper::map(\common\models\Brandname::findAll(['status' => \common\models\Brandname::STATUS_ACTIVE]), 'id', 'brandname'),
+                        'options' => ['placeholder' => 'Chọn brandname'],
+                        'pluginOptions' => [
+                            'allowClear' => true
+                        ],
+                    ])->label('Brandname');
+                    ?>
                 </td>
 
                 <td>
@@ -49,34 +58,26 @@ $dataCreated_by = ArrayHelper::map(\common\models\User::find()->andWhere(['statu
             <tr>
                 <td style="padding-right: 10%;width: 300px;">
                     <?php
-                    echo $form->field($model, 'fromdate')->widget(\kartik\date\DatePicker::className(), [
-                        'options' => ['placeholder' => 'Từ ngày'],
+                    echo $form->field($model, 'month')->widget(\kartik\date\DatePicker::className(), [
+                        'options' => ['placeholder' => 'Tháng'],
                         'convertFormat' => true,
                         'pluginOptions' => [
-                            'format' => 'dd/M/yyyy',
+                            'format' => 'M/yyyy',
                             'todayHighlight' => true,
                             'width' => '200px'
                         ]
-                    ])->label('Từ ngày');
-                    ?>
-                </td>
-                <td style="padding-right: 10%;width: 300px;">
-                    <?php
-                    echo $form->field($model, 'todate')->widget(\kartik\date\DatePicker::className(), [
-                        'options' => ['placeholder' => 'Đến ngày'],
-                        'convertFormat' => true,
-                        'pluginOptions' => [
-                            'format' => 'dd/M/yyyy',
-                            'todayHighlight' => true,
-                            'width' => '200px'
-                        ]
-                    ])->label('Đến ngày');
+                    ])->label('Tháng');
                     ?>
                 </td>
                 <td>
                     <?= $form->field($model, 'status_')->dropDownList(
                         \common\models\HistoryContact::getListStatusAll(), ['class' => 'input-circle']
                     )->label('Trạng thái') ?>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-right: 10%;width: 300px;">
+                    <?= $form->field($model, 'network')->checkboxList(ArrayHelper::map(\common\models\Network::findAll(['status' => \common\models\Network::STATUS_ACTIVE]), 'id', 'name'))->label('Nhà mạng') ?>
                 </td>
             </tr>
             <tr>
