@@ -69,6 +69,24 @@ class UserController extends BaseBEController
      */
     public function actionIndex()
     {
+        if (isset($_POST['hasEditable'])) {
+            $post = Yii::$app->request->post();
+            if ($post['editableKey']) {
+                $user = User::findOne($post['editableKey']);
+                $index = $post['editableIndex'];
+                if ($user) {
+                    $user->load($post['User'][$index], '');
+                    if($user->update()){
+                        echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+                    }
+                } else {
+                    echo \yii\helpers\Json::encode(['output' => '', 'message' => \Yii::t('app', 'Người dùng không tồn tại')]);
+                }
+            } else {
+                echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+            }
+            return;
+        }
         $searchModel = new UserSearch();
         $params = Yii::$app->request->queryParams;
         $params['UserSearch']['type'] = User::USER_TYPE_ADMIN;

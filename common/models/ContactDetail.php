@@ -43,9 +43,14 @@ class ContactDetail extends \yii\db\ActiveRecord
     public $fromdate;
     public $todate;
     public $content;
+    public $comment;
+    public $comment_bonus;
     public $status_;
     const STATUS_ACTIVE = 10;
     const STATUS_INACTIVE = 0;
+
+    const _TYPE_COMMENTDAY = 1;
+    const _TYPE_COMMENTMONTH = 2;
 
     /**
      * @inheritdoc
@@ -65,6 +70,7 @@ class ContactDetail extends \yii\db\ActiveRecord
                 'match', 'pattern' => '/^(0)\d{9,10}$/',
                 'message' => 'Số điện thoại không hợp lệ - Định dạng số điện thoại bắt đầu với số 0, ví dụ 0912345678, 012312341234'
             ],
+            [['comment','comment_bonus'],'string']
         ];
     }
 

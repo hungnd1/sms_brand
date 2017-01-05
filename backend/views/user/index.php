@@ -46,7 +46,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             'attribute' => 'username',
                             'format' => 'raw',
                             'width' => '10%',
-//                'vAlign' => 'middle',
                             'value' => function ($model, $key, $index, $widget) {
                                 /**
                                  * @var $model \common\models\User

@@ -4,13 +4,13 @@ namespace backend\controllers;
 
 use common\components\ActionLogTracking;
 use common\helpers\TBApplication;
+use common\models\Comment;
 use common\models\ContactDetail;
 use common\models\ContactDetailSearch;
 use common\models\HistoryContactAsm;
 use common\models\UserActivity;
 use kartik\widgets\ActiveForm;
 use Yii;
-use yii\data\ActiveDataProvider;
 use yii\db\Exception;
 use yii\filters\VerbFilter;
 use yii\web\NotFoundHttpException;
@@ -286,7 +286,8 @@ class ContactDetailController extends BaseBEController
         ]);
     }
 
-    public function actionSearch(){
+    public function actionSearch()
+    {
 
         $searchModel = new ContactDetailSearch();
         $model = new HistoryContactAsm();
@@ -294,13 +295,14 @@ class ContactDetailController extends BaseBEController
         if ($model->load(Yii::$app->request->post())) {
             $dataProvider = $searchModel->searchHistory($model);
         }
-            return $this->render('search', [
-                'dataProvider' => $dataProvider,
-                'model' => $model
-            ]);
+        return $this->render('search', [
+            'dataProvider' => $dataProvider,
+            'model' => $model
+        ]);
     }
 
-    public function actionReport(){
+    public function actionReport()
+    {
 
         $searchModel = new ContactDetailSearch();
         $model = new HistoryContactAsm();
@@ -314,7 +316,8 @@ class ContactDetailController extends BaseBEController
         ]);
     }
 
-    public function actionReportMonth(){
+    public function actionReportMonth()
+    {
 
         $searchModel = new ContactDetailSearch();
         $model = new HistoryContactAsm();
@@ -325,6 +328,128 @@ class ContactDetailController extends BaseBEController
         return $this->render('report_month', [
             'dataProvider' => $dataProvider,
             'model' => $model,
+        ]);
+    }
+
+    public function actionComment()
+    {
+        $searchModel = new ContactDetailSearch();
+        $dataProvider = $searchModel->comment();
+        $model = new ContactDetail();
+        if ($model->load(Yii::$app->request->post())) {
+            $dataProvider = $searchModel->comment($model);
+        }
+        if (isset($_POST['hasEditable'])) {
+            $post = Yii::$app->request->post();
+            if ($post['editableKey']) {
+                $id = $post['editableKey'];
+                $timestamp = strtotime('today midnight');
+                $index = $post['editableIndex'];
+                $create_at_end = $timestamp + (60 * 60 * 24);
+                $comment = Comment::find()
+                    ->andWhere(['id_contact_detail' => $id])
+                    ->andWhere(['is_month' => Comment::NOT_MONTH])
+                    ->andWhere(['>=', 'updated_at', $timestamp])
+                    ->andWhere(['<=', 'updated_at', $create_at_end])
+                    ->orderBy(['updated_at' => SORT_DESC])->one();
+                if ($comment) {
+                    if (isset($post['ContactDetail'][$index]['comment'])) {
+                        $content = $post['ContactDetail'][$index]['comment'];
+                        $comment->content = $content;
+                    }
+                    if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
+                        $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
+                    }
+                    if ($comment->save(false)) {
+                        echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+                    }
+                } else {
+                    $comment = new Comment();
+                    $comment->id_contact_detail = $id;
+                    $comment->created_at = $timestamp;
+                    $comment->updated_at = time();
+                    $comment->is_month = Comment::NOT_MONTH;
+                    if (isset($post['ContactDetail'][$index]['comment'])) {
+                        $content = $post['ContactDetail'][$index]['comment'];
+                        $comment->content = $content;
+                    }
+                    if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
+                        $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
+                    }
+                    if ($comment->save(false)) {
+                        echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+                    }
+                }
+            } else {
+                echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+            }
+            return;
+        }
+
+        return $this->render('comment', [
+            'dataProvider' => $dataProvider,
+            'model' => $model
+        ]);
+    }
+
+    public function actionCommentMonth()
+    {
+        $searchModel = new ContactDetailSearch();
+        $dataProvider = $searchModel->commentMonth();
+        $model = new ContactDetail();
+        if ($model->load(Yii::$app->request->post())) {
+            $dataProvider = $searchModel->commentMonth($model);
+        }
+        if (isset($_POST['hasEditable'])) {
+            $post = Yii::$app->request->post();
+            if ($post['editableKey']) {
+                $id = $post['editableKey'];
+                $timestamp = strtotime('today midnight');
+                $index = $post['editableIndex'];
+                $create_at_end = $timestamp + (60 * 60 * 24);
+                $comment = Comment::find()
+                    ->andWhere(['id_contact_detail' => $id])
+                    ->andWhere(['is_month' => Comment::IS_MONTH])
+                    ->andWhere(['>=', 'updated_at', $timestamp])
+                    ->andWhere(['<=', 'updated_at', $create_at_end])
+                    ->orderBy(['updated_at' => SORT_DESC])->one();
+                if ($comment) {
+                    if (isset($post['ContactDetail'][$index]['comment'])) {
+                        $content = $post['ContactDetail'][$index]['comment'];
+                        $comment->content = $content;
+                    }
+                    if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
+                        $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
+                    }
+                    if ($comment->save(false)) {
+                        echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+                    }
+                } else {
+                    $comment = new Comment();
+                    $comment->id_contact_detail = $id;
+                    $comment->created_at = $timestamp;
+                    $comment->updated_at = time();
+                    $comment->is_month = Comment::IS_MONTH;
+                    if (isset($post['ContactDetail'][$index]['comment'])) {
+                        $content = $post['ContactDetail'][$index]['comment'];
+                        $comment->content = $content;
+                    }
+                    if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
+                        $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
+                    }
+                    if ($comment->save(false)) {
+                        echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+                    }
+                }
+            } else {
+                echo \yii\helpers\Json::encode(['output' => '', 'message' => '']);
+            }
+            return;
+        }
+
+        return $this->render('comment_', [
+            'dataProvider' => $dataProvider,
+            'model' => $model
         ]);
     }
 }

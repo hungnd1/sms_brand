@@ -25,6 +25,7 @@ class Contact extends \yii\db\ActiveRecord
     const START_SCHOOL_YEAR = 1;
     const END_SCHOOL_YEAR = 2;
     public $file;
+    public $school_year_status;
 
     /**
      * @inheritdoc
@@ -107,7 +108,7 @@ class Contact extends \yii\db\ActiveRecord
         return [
             [['contact_name'], 'required', 'message' => '{attribute} không được để trống', 'on' => 'admin_create_update'],
             [['description', 'file'], 'string'],
-            [['status', '$school_year_status', 'created_at', 'updated_at', 'path', 'created_by'], 'integer'],
+            [['status', 'school_year_status', 'created_at', 'updated_at', 'path', 'created_by'], 'integer'],
             [['contact_name'], 'string', 'max' => 500],
         ];
     }
@@ -145,5 +146,12 @@ class Contact extends \yii\db\ActiveRecord
             self::STATUS_ACTIVE => 'Hoạt động',
             self::STATUS_INACTIVE => 'Không hoạt động',
         ];
+    }
+
+    public static function getListContact()
+    {
+        $contact = Contact::find()->andWhere(['status' => Contact::STATUS_ACTIVE])
+            ->andWhere('path is not null')->andWhere(['created_by' => Yii::$app->user->id])->all();
+        return $contact;
     }
 }

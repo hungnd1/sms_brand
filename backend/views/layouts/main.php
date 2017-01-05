@@ -213,8 +213,20 @@ $this->registerJs("Layout.init();");
                 [
                     'encode' => false,
                     'label' => '<i class="icon-users"></i> Nhận xét',
-                    'url' => ['user/index'],
-                    'require_auth' => true,
+                    'items' => [
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Nhận xét ngày'),
+                            'url' => ['contact-detail/comment'],
+                            'require_auth' => true,
+                        ],
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Nhận xét tháng'),
+                            'url' => ['contact-detail/comment-month'],
+                            'require_auth' => true,
+                        ],
+                    ]
                 ],
             ]
         ],
