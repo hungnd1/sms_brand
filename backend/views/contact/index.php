@@ -1,6 +1,7 @@
 <?php
 
 use kartik\grid\GridView;
+use yii\bootstrap\Modal;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
@@ -234,3 +235,27 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php } ?>
 </div>
+<?php
+Modal::begin([
+    'header' => '<h4>Thông báo</h4>',
+    'id' => 'myModal',
+    'size' => ''
+]);
+
+echo $this->render('_popup', [
+    'message' => $message
+]);
+Modal::end();
+?>
+<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript">
+    $(function() {
+        var message = '<?= $message != '' ? $message : 0 ?>';
+        if(message != 0){
+            $('#myModal').modal('show');
+        }
+    });
+    function closeP(){
+        $('#myModal').modal('toggle');
+    }
+</script>

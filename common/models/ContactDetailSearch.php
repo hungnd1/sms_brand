@@ -388,4 +388,88 @@ class ContactDetailSearch extends ContactDetail
         ]);
         return $dataProvider;
     }
+
+    public function message($params)
+    {
+        $time_send = User::findOne(['id' => Yii::$app->user->id])->time_send;
+        $time_send_before = time() - $time_send * 24 * 60 * 60;
+        $arrSuccess = array();
+        $listContactSuccess = ContactDetail::find()
+            ->innerJoin('history_contact_asm', 'history_contact_asm.contact_id = contact_detail.id')
+            ->andWhere(['contact_detail.status' => ContactDetail::STATUS_ACTIVE])
+            ->andWhere(['contact_detail.created_by' => Yii::$app->user->id])
+            ->andWhere(['history_contact_asm.history_contact_status' => HistoryContact::STATUS_SUCCESS])
+            ->andWhere(['<=', 'history_contact_asm.created_at', time()])
+            ->andWhere(['>=', 'history_contact_asm.created_at', $time_send_before])
+            ->orderBy(['history_contact_asm.created_at' => SORT_DESC])
+            ->distinct('contact_detail.id')->all();
+
+        foreach($listContactSuccess as $listContact){
+            array_push($arrSuccess,$listContact);
+        }
+        $query = ContactDetail::find()->andWhere(['status'=>ContactDetail::STATUS_ACTIVE])
+            ->andWhere(['NOT IN','id',$arrSuccess]);
+
+        // add conditions that should always apply here
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+        ]);
+
+        $this->load($params);
+
+        if (!$this->validate()) {
+            // uncomment the following line if you do not want to return any records when validation fails
+            // $query->where('0=1');
+            return $dataProvider;
+        }
+
+        // grid filtering conditions
+        $query->andFilterWhere([
+            'id' => $this->id,
+            'status' => $this->status,
+            'gender' => $this->gender,
+            'birthday' => $this->birthday,
+            'created_by' => $this->created_by,
+            'contact_id' => $this->contact_id,
+        ]);
+
+        if ($this->birthday != '') {
+            $created_at_arr = explode('/', $this->birthday);
+            $date = \DateTime::createFromFormat('Y-m-d H:i:s', $created_at_arr['2'] . '-' . $created_at_arr['1'] . '-' . $created_at_arr['0'] . ' 00:00:00');
+            $create_at = strtotime($date->format('m/d/Y'));
+            $create_at_end = $create_at + (60 * 60 * 24);
+
+            $query->andFilterWhere(['>=', 'birthday', $create_at]);
+            $query->andFilterWhere(['<=', 'birthday', $create_at_end]);
+        }
+
+        if ($this->created_at != '') {
+            $created_at_arr = explode('/', $this->created_at);
+            $date = \DateTime::createFromFormat('Y-m-d H:i:s', $created_at_arr['2'] . '-' . $created_at_arr['1'] . '-' . $created_at_arr['0'] . ' 00:00:00');
+            $create_at = strtotime($date->format('m/d/Y'));
+            $create_at_end = $create_at + (60 * 60 * 24);
+
+            $query->andFilterWhere(['>=', 'created_at', $create_at]);
+            $query->andFilterWhere(['<=', 'created_at', $create_at_end]);
+        }
+
+        if ($this->updated_at != '') {
+            $created_at_arr = explode('/', $this->updated_at);
+            $date = \DateTime::createFromFormat('Y-m-d H:i:s', $created_at_arr['2'] . '-' . $created_at_arr['1'] . '-' . $created_at_arr['0'] . ' 00:00:00');
+            $updated_at = strtotime($date->format('m/d/Y'));
+            $updated_at_end = $updated_at + (60 * 60 * 24);
+
+            $query->andFilterWhere(['>=', 'updated_at', $updated_at]);
+            $query->andFilterWhere(['<=', 'updated_at', $updated_at_end]);
+        }
+
+        $query->andFilterWhere(['like', 'lower(fullname)', strtolower($this->fullname)])
+            ->andFilterWhere(['like', 'phone_number', $this->phone_number])
+            ->andFilterWhere(['like', 'address', $this->address])
+            ->andFilterWhere(['like', 'lower(email)', strtolower($this->email)])
+            ->andFilterWhere(['like', 'company', $this->company])
+            ->andFilterWhere(['like', 'notes', $this->notes]);
+        return $dataProvider;
+    }
 }
