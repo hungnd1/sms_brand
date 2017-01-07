@@ -26,6 +26,11 @@ $this->registerJs("Layout.init();");
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
+    <style>
+        .page-header .page-header-menu .hor-menu .navbar-nav > li > a {
+            padding: 16px 13px 15px 13px;
+        }
+    </style>
 </head>
 <body class="page-header-menu-fixed">
 <?php $this->beginBody() ?>

@@ -34,7 +34,7 @@ use yii\helpers\Html;
     <div class="form-actions">
         <div class="row">
             <div class="col-md-offset-3 col-md-9" style="padding-left: 10%;">
-                <?= Html::a('Xem danh sách', ['message'], ['class' => 'btn btn-success']) ?>
+                <?= Html::a('Xem danh sách', ['contact/message'], ['class' => 'btn btn-success']) ?>
                 <?= Html::button('Bỏ qua', ['onclick'=>'closeP();', 'class' => 'btn btn-default']) ?>
             </div>
         </div>
