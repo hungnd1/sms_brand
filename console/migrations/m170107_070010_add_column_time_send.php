@@ -6,7 +6,7 @@ class m170107_070010_add_column_time_send extends Migration
 {
     public function up()
     {
-        $this->addColumn('user','time_send','int(11) default(1)');
+        $this->addColumn('user','time_send','int(11)');
 
     }
 
