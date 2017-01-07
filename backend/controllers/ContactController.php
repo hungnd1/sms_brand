@@ -56,36 +56,12 @@ class ContactController extends BaseBEController
 
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams, null);
         $dataProviderClass = $searchModel1->search(Yii::$app->request->queryParams, 1);
-        $message  = '';
-        if (Yii::$app->user->identity->level == User::USER_LEVEL_TKKHACHHANG_DAILY ||
-            Yii::$app->user->identity->level == User::USER_LEVEL_ADMIN ||
-            Yii::$app->user->identity->level == User::USER_LEVEL_TKKHACHHANG_DAILYCAPDUOI ||
-            Yii::$app->user->identity->level == User::USER_LEVEL_TKKHACHHANGADMIN
-        ) {
-            $time_send = User::findOne(['id' => Yii::$app->user->id])->time_send;
-            $time_send_before = time() - $time_send * 24 * 60 * 60;
-
-            $listContact = ContactDetail::find()->andWhere(['status'=>ContactDetail::STATUS_ACTIVE,'created_by'=>Yii::$app->user->id])->count();
-
-            $listContactMessage = ContactDetail::find()
-                ->innerJoin('history_contact_asm', 'history_contact_asm.contact_id = contact_detail.id')
-                ->andWhere(['contact_detail.status' => ContactDetail::STATUS_ACTIVE])
-                ->andWhere(['contact_detail.created_by' => Yii::$app->user->id])
-                ->andWhere(['history_contact_asm.history_contact_status' => HistoryContact::STATUS_SUCCESS])
-                ->andWhere(['<=', 'history_contact_asm.created_at', time()])
-                ->andWhere(['>=', 'history_contact_asm.created_at', $time_send_before])
-                ->orderBy(['history_contact_asm.created_at' => SORT_DESC])
-                ->distinct('contact_detail.id')->count();
-            $listContactNoMessage = intval($listContact) - intval($listContactMessage);
-            $message = 'Hệ thống phát hiện ra đang  có '. $listContactNoMessage .'/ '.$listContact.' người sử dụng của hệ thống đã quá '.$time_send.' ngày liên tiếp chưa nhận được thông báo gì từ hệ thống gửi tới';
-        }
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'searchModel1' => $searchModel1,
             'dataProvider' => $dataProvider,
             'dataProviderClass' => $dataProviderClass,
-            'message' => $message
         ]);
     }
 
