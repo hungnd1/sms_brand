@@ -131,9 +131,10 @@ class UserController extends BaseBEController
             $model->password_reset_token = $model->password;
             $model->setPassword($model->password);
             $model->is_send = 0;
+            $model->time_send = 1;
             $model->number_sms = 0;
             $model->generateAuthKey();
-            if ($model->save()) {
+            if ($model->save(false)) {
                 Yii::$app->session->setFlash('success', 'Thêm người dùng thành công');
                 return $this->redirect(['index']);
 
@@ -187,11 +188,11 @@ class UserController extends BaseBEController
                     return $this->render('update', [
                         'model' => $model,
                     ]);
-                } else if ($model->update()) {
+                } else if ($model->update(false)) {
                     Yii::$app->session->setFlash('success', 'Cập nhật người dùng thành công');
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
-            } else if ($model->update()) {
+            } else if ($model->update(false)) {
                 Yii::$app->session->setFlash('success', 'Cập nhật người dùng thành công');
                 return $this->redirect(['view', 'id' => $model->id]);
             } else {
@@ -224,7 +225,7 @@ class UserController extends BaseBEController
             return ActiveForm::validate($model);
         }
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+        if ($model->load(Yii::$app->request->post()) && $model->save(false)) {
             Yii::$app->session->setFlash('success', Message::MSG_UPDATE_PROFILE);
             return $this->redirect(['info']);
         } else {
@@ -377,8 +378,8 @@ class UserController extends BaseBEController
             Yii::$app->session->setFlash('success', 'Xóa thành công');
             return $this->redirect(['index']);
         }
-        var_dump($model->getFirstErrors());
-        exit;
+//        var_dump($model->getFirstErrors());
+//        exit;
         Yii::$app->session->setFlash('error', Message::MSG_FAIL);
         return $this->redirect(['index']);
 

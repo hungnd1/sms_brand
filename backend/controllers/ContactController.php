@@ -4,17 +4,19 @@ namespace backend\controllers;
 
 use common\components\ActionLogTracking;
 use common\helpers\TBApplication;
+use common\models\Contact;
 use common\models\ContactDetail;
+use common\models\ContactDetailSearch;
+use common\models\ContactSearch;
 use common\models\ContactSearch_;
+use common\models\HistoryContact;
+use common\models\User;
 use common\models\UserActivity;
 use Exception;
 use kartik\widgets\ActiveForm;
 use Yii;
-use common\models\Contact;
-use common\models\ContactSearch;
-use yii\web\Controller;
-use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
@@ -52,8 +54,8 @@ class ContactController extends BaseBEController
         $searchModel = new ContactSearch();
         $searchModel1 = new ContactSearch_();
 
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams,null);
-        $dataProviderClass = $searchModel1->search(Yii::$app->request->queryParams,1);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, null);
+        $dataProviderClass = $searchModel1->search(Yii::$app->request->queryParams, 1);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
@@ -91,12 +93,12 @@ class ContactController extends BaseBEController
             return ActiveForm::validate($model);
         }
         $check = 0;
-        $check1= 0;
+        $check1 = 0;
         if ($model->load(Yii::$app->request->post())) {
             $model->created_at = time();
             $model->updated_at = time();
             $model->created_by = Yii::$app->user->id;
-            if($model->save(false)){
+            if ($model->save(false)) {
                 $check = 1;
             }
             $file_download = UploadedFile::getInstance($model, 'file');
@@ -127,7 +129,7 @@ class ContactController extends BaseBEController
                         $modelContact->phone_number = TBApplication::convert84($rowData[0][2]);
                         $modelContact->address = $rowData[0][3];
                         $modelContact->company = $rowData[0][4];
-                        $modelContact->birthday = strtotime(str_replace('/','-',$rowData[0][5]));
+                        $modelContact->birthday = strtotime(str_replace('/', '-', $rowData[0][5]));
 
                         if ($rowData[0][6] == 'Nam') {
                             $modelContact->gender = ContactDetail::GENDER_MALE;
@@ -141,39 +143,39 @@ class ContactController extends BaseBEController
                         $modelContact->contact_id = $model->id;
                         $modelContact->status = ContactDetail::STATUS_ACTIVE;
                         if ($modelContact->save(false)) {
-                           $check1 = 1;
+                            $check1 = 1;
                         }
                     }
 
                 } catch (Exception $ex) {
                 }
-            }else{
+            } else {
                 $check1 = 1;
             }
             if (!$check) {
                 Yii::$app->session->setFlash('error', 'Thêm danh bạ không thành công');
-                if($type){
+                if ($type) {
                     return $this->render('_create', [
                         'model' => $model,
                     ]);
-                }else{
+                } else {
                     return $this->render('create', [
                         'model' => $model,
                     ]);
                 }
 
-            }else if(!$check1){
+            } else if (!$check1) {
                 Yii::$app->session->setFlash('error', 'Upload danh bạ chi tiết xảy ra lỗi');
-            }else{
+            } else {
                 Yii::$app->session->setFlash('success', 'Thêm danh bạ thành công');
                 return $this->redirect(['index']);
             }
         } else {
-            if($type){
+            if ($type) {
                 return $this->render('_create', [
                     'model' => $model,
                 ]);
-            }else{
+            } else {
                 return $this->render('create', [
                     'model' => $model,
                 ]);
@@ -198,10 +200,10 @@ class ContactController extends BaseBEController
             return ActiveForm::validate($model);
         }
         $check = 0;
-        $check1= 0;
+        $check1 = 0;
         if ($model->load(Yii::$app->request->post())) {
             $model->updated_at = time();
-            if($model->save(false)){
+            if ($model->save(false)) {
                 $check = 1;
             }
             $file_download = UploadedFile::getInstance($model, 'file');
@@ -232,7 +234,7 @@ class ContactController extends BaseBEController
                         $modelContact->phone_number = TBApplication::convert84($rowData[0][2]);
                         $modelContact->address = $rowData[0][3];
                         $modelContact->company = $rowData[0][4];
-                        $modelContact->birthday = strtotime(str_replace('/','-',$rowData[0][5]));
+                        $modelContact->birthday = strtotime(str_replace('/', '-', $rowData[0][5]));
                         if ($rowData[0][6] == 'Nam') {
                             $modelContact->gender = ContactDetail::GENDER_MALE;
                         } else {
@@ -251,33 +253,33 @@ class ContactController extends BaseBEController
 
                 } catch (Exception $ex) {
                 }
-            }else{
+            } else {
                 $check1 = 1;
             }
             if (!$check) {
                 Yii::$app->session->setFlash('error', 'Cập nhật danh bạ không thành công');
-                if($type){
+                if ($type) {
                     return $this->render('_update', [
                         'model' => $model,
                     ]);
-                }else{
+                } else {
                     return $this->render('create', [
                         'model' => $model,
                     ]);
                 }
 
-            }else if(!$check1){
+            } else if (!$check1) {
                 Yii::$app->session->setFlash('error', 'Upload danh bạ chi tiết xảy ra lỗi');
-            }else{
+            } else {
                 Yii::$app->session->setFlash('success', 'Cập nhật danh bạ thành công');
                 return $this->redirect(['index']);
             }
         } else {
-            if($type){
+            if ($type) {
                 return $this->render('_update', [
                     'model' => $model,
                 ]);
-            }else{
+            } else {
                 return $this->render('create', [
                     'model' => $model,
                 ]);
@@ -314,10 +316,11 @@ class ContactController extends BaseBEController
         }
     }
 
-    public function actionDownloadTemplate(){
+    public function actionDownloadTemplate()
+    {
         $file_name = 'contact.xls';
         $tmp = Yii::getAlias('@backend') . '/web/' . Yii::getAlias('@example') . '/';
-        $file = $tmp.$file_name;
+        $file = $tmp . $file_name;
         if (file_exists($file)) {
 
             header("Content-Length: " . filesize($file));
@@ -332,5 +335,17 @@ class ContactController extends BaseBEController
         } else {
             echo 'The file "contact.xls" does not exist';
         }
+    }
+
+    public function actionMessage(){
+
+        $searchModel = new ContactDetailSearch();
+        $dataProvider = $searchModel->message(Yii::$app->request->queryParams);
+        $model = new ContactDetail();
+        return $this->render('message', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+            'model' => $model
+        ]);
     }
 }

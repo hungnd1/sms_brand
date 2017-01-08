@@ -38,6 +38,7 @@ use yii\web\IdentityInterface;
  * @property integer $number_sms
  * @property integer $is_send
  * @property integer $brandname_id
+ * @property integer $time_send
  *
  * @property AuthAssignment[] $authAssignments
  * @property AuthItem[] $itemNames
@@ -194,7 +195,7 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            [['username', 'auth_key','phone_number', 'password_hash', 'email', 'status'], 'required'], // bỏ  required phone_number
+            [['username', 'auth_key','brandname_id','phone_number', 'password_hash', 'email', 'status'], 'required'], // bỏ  required phone_number
             [
                 [
                     'role',
@@ -209,6 +210,7 @@ class User extends ActiveRecord implements IdentityInterface
                     'is_send',
                     'user_ref_id',
                     'created_by',
+                    'time_send',
                     'type_kh',
                     'brandname_id'
                 ],

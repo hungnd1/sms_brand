@@ -5,6 +5,7 @@ use common\models\KodiCategory;
 use common\widgets\Alert;
 use common\widgets\Nav;
 use common\widgets\NavBar;
+use yii\bootstrap\Modal;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\Breadcrumbs;
@@ -366,6 +367,7 @@ $this->registerJs("Layout.init();");
         </div>
     </div>
 </div>
+
 <!-- END CONTAINER -->
 
 <!-- BEGIN FOOTER -->

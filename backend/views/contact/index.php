@@ -1,6 +1,7 @@
 <?php
 
 use kartik\grid\GridView;
+use yii\bootstrap\Modal;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */

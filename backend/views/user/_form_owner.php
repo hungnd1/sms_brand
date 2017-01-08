@@ -1,5 +1,6 @@
 <?php
 
+use common\models\User;
 use kartik\widgets\ActiveForm;
 use yii\helpers\Html;
 
@@ -29,6 +30,13 @@ $formId = $form->id;
     <?= $form->field($model, 'username')->textInput(['readonly' => true]) ?>
     <?= $form->field($model, 'email')->textInput(['placeholder' => 'Email', 'maxlength' => 100]) ?>
     <?= $form->field($model, 'fullname')->textInput(['placeholder' => 'Họ và tên', 'maxlength' => 255]) ?>
+    <?php if (Yii::$app->user->identity->level == User::USER_LEVEL_TKKHACHHANG_DAILY ||
+        Yii::$app->user->identity->level == User::USER_LEVEL_ADMIN ||
+        Yii::$app->user->identity->level == User::USER_LEVEL_TKKHACHHANG_DAILYCAPDUOI ||
+        Yii::$app->user->identity->level == User::USER_LEVEL_TKKHACHHANGADMIN
+    ) { ?>
+        <?= $form->field($model, 'time_send')->textInput(['placeholder' => 'Thời gian cấu hình', 'maxlength' => 2])->label('Thời gian cấu hình') ?>
+    <?php } ?>
 </div>
 
 <div class="form-actions">
