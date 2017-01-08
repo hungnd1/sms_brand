@@ -7,35 +7,57 @@ use yii\grid\GridView;
 /* @var $searchModel common\models\ExamSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Tạo mới kỳ thi';
+$this->title = 'Điểm kỳ thi';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="exam-index">
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-cogs font-green-sharp"></i>
+                    <span class="caption-subject font-green-sharp bold uppercase">Điểm kỳ thi</span>
+                </div>
+                <div class="tools">
+                    <a href="javascript:;" class="collapse">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
 
-    <h1><?= Html::encode($this->title) ?></h1>
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+                <p>
+                    <?php if (!Yii::$app->params['tvod1Only']) echo Html::a("Tải lên điểm phòng thi", Yii::$app->urlManager->createUrl(['/mark/view-upload']), ['class' => 'btn btn-success']) ?>
+                    <?php if (!Yii::$app->params['tvod1Only']) echo Html::a("Xuất điểm phòng thi", Yii::$app->urlManager->createUrl(['/mark/view-export']), ['class' => 'btn btn-success']) ?>
+                </p>
 
-    <p>
-        <?= Html::a('Create Exam', ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
-        'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+                <div style="margin: 25px 0 25px 0">
+                    <?= $this->render('_search', [
+                        'model' => $model,
+                        'dataExams' => $dataExams,
+                        'dataRooms' => $dataRooms
+                    ]) ?>
+                </div>
 
-            'id',
-            'name',
-            'semester',
-            'start_date',
-            'status',
-            // 'description',
-            // 'created_at',
-            // 'updated_at',
-            // 'created_by',
-            // 'updated_by',
+                <?= GridView::widget([
+                    'dataProvider' => $dataProvider,
+                    'columns' => [
+                        ['class' => 'yii\grid\SerialColumn'],
 
-            ['class' => 'yii\grid\ActionColumn'],
-        ],
-    ]); ?>
+                        'id',
+                        'name',
+                        'semester',
+                        'start_date',
+                        'status',
+                        // 'description',
+                        // 'created_at',
+                        // 'updated_at',
+                        // 'created_by',
+                        // 'updated_by',
+
+                        ['class' => 'yii\grid\ActionColumn'],
+                    ],
+                ]); ?>
+            </div>
+        </div>
+    </div>
 </div>

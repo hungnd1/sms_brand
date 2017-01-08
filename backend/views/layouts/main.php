@@ -25,6 +25,11 @@ $this->registerJs("Layout.init();");
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
+    <style>
+        .page-header .page-header-menu .hor-menu .navbar-nav > li > a {
+            padding: 16px 13px 15px 13px;
+        }
+    </style>
 </head>
 <body class="page-header-menu-fixed">
 <?php $this->beginBody() ?>
@@ -216,13 +221,13 @@ $this->registerJs("Layout.init();");
                     'items' => [
                         [
                             'encode' => false,
-                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Nhận xét ngày'),
+                            'label' => '<i class="icon-film"></i>' . Yii::t('app', 'Nhận xét ngày'),
                             'url' => ['contact-detail/comment'],
                             'require_auth' => true,
                         ],
                         [
                             'encode' => false,
-                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Nhận xét tháng'),
+                            'label' => '<i class="icon-film"></i>' . Yii::t('app', 'Nhận xét tháng'),
                             'url' => ['contact-detail/comment-month'],
                             'require_auth' => true,
                         ],
@@ -297,7 +302,7 @@ $this->registerJs("Layout.init();");
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Tạo mới kỳ thi',
-                    'url' => ['exam/create'],
+                    'url' => ['exam/view-create'],
                     'require_auth' => true,
                 ],
                 [

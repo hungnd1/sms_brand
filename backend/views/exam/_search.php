@@ -1,10 +1,11 @@
 <?php
 
+use kartik\widgets\ActiveForm;
+use kartik\widgets\Select2;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ExamSearch */
+/* @var $model common\models\ExamRooms */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 
@@ -12,32 +13,39 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin([
         'action' => ['index'],
-        'method' => 'get',
+        'method' => 'post',
     ]); ?>
 
-    <?= $form->field($model, 'id') ?>
-
-    <?= $form->field($model, 'name') ?>
-
-    <?= $form->field($model, 'semester') ?>
-
-    <?= $form->field($model, 'start_date') ?>
-
-    <?= $form->field($model, 'status') ?>
-
-    <?php // echo $form->field($model, 'description') ?>
-
-    <?php // echo $form->field($model, 'created_at') ?>
-
-    <?php // echo $form->field($model, 'updated_at') ?>
-
-    <?php // echo $form->field($model, 'created_by') ?>
-
-    <?php // echo $form->field($model, 'updated_by') ?>
-
     <div class="form-group">
+        <table>
+            <tr>
+                <td style="padding-right: 10px">
+                    <?=
+                    $form->field($model, 'exam_id')->widget(Select2::classname(), [
+                        'data' => $dataExams,
+                        'pluginOptions' => [
+                            'allowClear' => false,
+                            'width' => '150px'
+                        ],
+                    ])->label('Kỳ thi');
+                    ?>
+                </td>
+                <td style="padding-right: 10px">
+                    <?=
+                    $form->field($model, 'id')->widget(Select2::classname(), [
+                        'data' => $dataRooms,
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'width' => '200px'
+                        ],
+                    ])->label('Phòng thi');
+                    ?>
+                </td>
+            </tr>
+        </table>
+
         <?= Html::submitButton('Search', ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton('Reset', ['class' => 'btn btn-default']) ?>
+
     </div>
 
     <?php ActiveForm::end(); ?>
