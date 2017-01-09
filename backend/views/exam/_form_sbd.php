@@ -42,7 +42,7 @@ use kartik\widgets\ActiveForm;
 
     <table>
         <tr>
-            <td collapse="2"><?= $form->field($model, 'isOderByName')->checkbox(['label' => 'Sắp xếp theo họ tên']) ?></td>
+            <td collapse="2"><?= $form->field($model, 'isOderByName')->checkbox(['label' => 'Sắp xếp theo họ tên', 'disabled' => true]) ?></td>
         </tr>
         <tr>
             <td><?= $form->field($model, 'isPrefix')->checkbox(['label' => 'Thêm tiền tố']) ?></td>

@@ -41,6 +41,11 @@ $js = <<<JS
     function showConfigSBD() {
         $('#popupSBD').modal('show');
     }
+    
+    // sumbit form
+    function submitForm() {
+        $("#create-form-id").submit();
+    }
 
     function createRoom(){
         subjects = $("#$tableSubjectId").yiiGridView("getSelectedRows");
@@ -52,12 +57,8 @@ $js = <<<JS
             )
             .done(function(result) {
                 $("#grid-subjects-id").html(result);
-//                if(result.success){
-//                    toastr.success(result.message);
-//                    jQuery.pjax.reload({container:'#{$tableSubjectId}'});
-//                }else{
-//                    toastr.error(result.message);
-//                }
+                jQuery.pjax.reload({container:'#{$tableSubjectId}'});
+                jQuery.pjax.reload({container:'#{$tableClassId}'});
             })
             .fail(function() {
                 toastr.error("server error");
@@ -100,15 +101,16 @@ $this->registerJs($js, View::POS_END);
     }
 </style>
 
-<?php $form = ActiveForm::begin([
-    'type' => ActiveForm::TYPE_HORIZONTAL,
-    'action' => ['create'],
-    'formConfig' => [
-        'deviceSize' => ActiveForm::SIZE_SMALL,
-    ]
-]); ?>
-
 <div class="form-body">
+
+    <?php $form = ActiveForm::begin([
+        'id' => 'create-form-id',
+        'type' => ActiveForm::TYPE_HORIZONTAL,
+        'action' => ['create'],
+        'formConfig' => [
+            'deviceSize' => ActiveForm::SIZE_SMALL,
+        ]
+    ]); ?>
 
     <table style="margin-top: 20px">
         <tr>
@@ -157,6 +159,7 @@ $this->registerJs($js, View::POS_END);
             </td>
         </tr>
     </table>
+    <?php ActiveForm::end(); ?>
 
     <table style="margin-top: 20px" width="100%">
         <tr>
@@ -285,13 +288,11 @@ $this->registerJs($js, View::POS_END);
     <div class="form-actions">
         <div class="row">
             <div class="col-md-offset-3 col-md-9" style="margin-left: 80%;">
-                <?= Html::submitButton('Tạo mới', ['class' => 'btn btn-success']) ?>
+                <?= Html::button('Tạo mới', ['class' => 'btn btn-success', 'onclick' => 'submitForm();']) ?>
                 <?= Html::a('Quay lại', ['index'], ['class' => 'btn btn-default']) ?>
             </div>
         </div>
     </div>
-
-    <?php ActiveForm::end(); ?>
 
     <?php
     Modal::begin([

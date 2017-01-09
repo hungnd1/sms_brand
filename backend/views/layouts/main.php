@@ -309,7 +309,7 @@ $this->registerJs("Layout.init();");
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Điểm kỳ thi',
-                    'url' => ['exam/index'],
+                    'url' => ['exam/exam_mark'],
                     'require_auth' => true,
                 ],
             ]

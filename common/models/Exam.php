@@ -28,6 +28,9 @@ class Exam extends \yii\db\ActiveRecord
         return 'exam';
     }
 
+    const EXAM_YET_STARTED = 0;
+    const EXAM_STARTED = 1;
+
     public $mixing;
 
     /**
@@ -36,7 +39,8 @@ class Exam extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['semester', 'mixing', 'start_date', 'status', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
+            [['name', 'start_date'], 'required'],
+            [['semester', 'mixing', 'status', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [['description'], 'string', 'max' => 500],
         ];

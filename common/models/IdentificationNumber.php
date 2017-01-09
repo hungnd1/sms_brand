@@ -13,7 +13,7 @@ use yii\base\Model;
 
 class IdentificationNumber extends Model
 {
-    public $isOderByName;
+    public $isOderByName = 1;
     public $isPrefix;
     public $prefix;
     public $isLenght;

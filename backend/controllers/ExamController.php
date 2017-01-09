@@ -137,9 +137,20 @@ class ExamController extends Controller
     public function actionCreate()
     {
         $model = new Exam();
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post())) {
+
+            // create exam
+            $model->created_by = Yii::$app->user->id;
+            $model->created_at = time();
+            $model->start_date = strtotime($model->start_date);
+            $model->status = Exam::EXAM_YET_STARTED;
+            $model->save();
+
+            // create exam room
+
+            Yii::$app->getSession()->setFlash('success', 'Tạo mới kỳ thi thành công');
         }
+        return $this->actionViewCreate();
     }
 
     /**
@@ -198,7 +209,7 @@ class ExamController extends Controller
         $value = Yii::$app->request->post('IdentificationNumber');
 
         $identificationNumber = new IdentificationNumber();
-        $identificationNumber->isOderByName = $value['isOderByName'];
+        $identificationNumber->isOderByName = 1;
         $identificationNumber->isPrefix = $value['isPrefix'];
         $identificationNumber->prefix = $value['prefix'];
         $identificationNumber->isLenght = $value['isLenght'];
@@ -208,6 +219,9 @@ class ExamController extends Controller
         $session['identificationNumber_' . Yii::$app->user->id] = $identificationNumber;
     }
 
+    /**
+     * @return array|string
+     */
     public function actionCreateQueueRooms()
     {
         // Delete temp exam room
@@ -229,10 +243,11 @@ class ExamController extends Controller
         ]);
 
         // get identification number
+        $session = Yii::$app->getSession();
         if (isset($session['identificationNumber_' . Yii::$app->user->id])) {
-            $idendificationNumber = $session['identificationNumber_' . Yii::$app->user->id];
+            $identificationNumber = $session['identificationNumber_' . Yii::$app->user->id];
         } else {
-            $idendificationNumber = new IdentificationNumber();
+            $identificationNumber = new IdentificationNumber();
         }
 
         $post = Yii::$app->request->post();
@@ -245,11 +260,14 @@ class ExamController extends Controller
 
         $subjectIds = $post['subjectIds'];
         $classIds = $post['classIds'];
-        $index = 1;
+        $indexRoom = 1;
         foreach ($classIds as $classId) {
 
             $class = Contact::findOne($classId);
-            $students = ContactDetail::find()->where(['contact_id' => $classId])->all();
+            $students = ContactDetail::find()
+                ->where(['contact_id' => $classId])
+                ->orderBy('fullname')
+                ->all();
 
             // create queue room
             $queueExamRoom = new QueueExamRoom();
@@ -263,16 +281,42 @@ class ExamController extends Controller
             $queueExamRoom->save(false);
 
             // create queue student room
+            $identification = '';
+            $indexIdentification = 1;
+            if (!is_null($identificationNumber->isPrefix)
+                && strcmp($identificationNumber->isPrefix, "1") == 0
+            ) {
+                $identification = $identification . $identificationNumber->prefix;
+            }
+
+            $length = 0;
+            if (!is_null($identificationNumber->isLenght)
+                && strcmp($identificationNumber->isLenght, "1") == 0
+            ) {
+                $length = intval($identificationNumber->lenght);
+            }
+
             foreach ($students as $student) {
                 $queueExamStudentRoom = new QueueExamStudentRoom();
                 $queueExamStudentRoom->student_id = $student->id;
                 $queueExamStudentRoom->student_name = $student->fullname;
-                $queueExamStudentRoom->identification = '1111';
-                $queueExamStudentRoom->exam_room_id =  $queueExamRoom->id;
+
+                // set identification number
+                $identificationNumberLenght = strlen('' . $indexIdentification);
+                $tmp = $identification;
+                if ($length > $identificationNumberLenght) {
+                    for ($i = 0; $i < ($length - $identificationNumberLenght); $i++) {
+                        $tmp = $tmp . '0';
+                    }
+                }
+
+                $queueExamStudentRoom->identification = $tmp . $indexIdentification;
+                $queueExamStudentRoom->exam_room_id = $queueExamRoom->id;
                 $queueExamStudentRoom->created_at = time();
-                $queueExamStudentRoom->created_by= Yii::$app->user->id;
+                $queueExamStudentRoom->created_by = Yii::$app->user->id;
                 $queueExamStudentRoom->ip = Yii::$app->request->getUserIP();
                 $queueExamStudentRoom->save(false);
+                $indexIdentification++;
             }
 
             // create queue detail exam room
@@ -285,7 +329,7 @@ class ExamController extends Controller
                 $queueDetailExamRoom->ip = Yii::$app->request->getUserIP();
                 $queueDetailExamRoom->save(false);
             }
-            $index++;
+            $indexRoom++;
         }
 
         // queue exam rooms
@@ -299,7 +343,7 @@ class ExamController extends Controller
                     'queue_detail_exam_room.ip' => Yii::$app->request->getUserIP(),
                     'queue_detail_exam_room.created_by' => Yii::$app->user->id
                 ])
-                ->orderBy('room_name')
+                ->orderBy('room_name', 'subject_name')
         ]);
 
         return $this->renderAjax('queue_detail_exam_room', [
