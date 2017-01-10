@@ -1,7 +1,7 @@
 <?php
 
 use yii\helpers\Html;
-use yii\grid\GridView;
+use kartik\grid\GridView;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\ExamSearch */
@@ -40,21 +40,37 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <?= GridView::widget([
                     'dataProvider' => $dataProvider,
+                    'id' => 'grid-exam-mark-id',
                     'columns' => [
-                        ['class' => 'yii\grid\SerialColumn'],
-
-                        'id',
-                        'name',
-                        'semester',
-                        'start_date',
-                        'status',
-                        // 'description',
-                        // 'created_at',
-                        // 'updated_at',
-                        // 'created_by',
-                        // 'updated_by',
-
-                        ['class' => 'yii\grid\ActionColumn'],
+                        // Checkbox
+                        [
+                            'class' => '\kartik\grid\CheckboxColumn',
+                            'width' => '5%'
+                        ],
+                        // STT
+                        [
+                            'class' => '\kartik\grid\SerialColumn',
+                            'header' => 'STT',
+                            'width' => '5%'
+                        ],
+                        // SBD
+                        [
+                            'format' => 'raw',
+                            'class' => '\kartik\grid\DataColumn',
+                            'label' => 'SBD',
+                            'value' => function ($model) {
+                                return $model->identification;
+                            },
+                        ],
+                        // Students
+                        [
+                            'format' => 'raw',
+                            'class' => '\kartik\grid\DataColumn',
+                            'label' => 'Tên thí sinh',
+                            'value' => function ($model) {
+                                return $model->student_name;
+                            },
+                        ],
                     ],
                 ]); ?>
             </div>

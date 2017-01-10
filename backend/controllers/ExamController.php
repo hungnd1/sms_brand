@@ -5,7 +5,10 @@ namespace backend\controllers;
 use common\models\Contact;
 use common\models\ContactDetail;
 use common\models\ContactDetailSearch;
+use common\models\DetailExamRoom;
+use common\models\ExamRoom;
 use common\models\ExamRooms;
+use common\models\ExamStudentRoom;
 use common\models\IdentificationNumber;
 use common\models\Mark;
 use common\models\QueueDetailExamRoom;
@@ -50,24 +53,34 @@ class ExamController extends Controller
      * Lists all Exam models.
      * @return mixed
      */
-    public function actionIndex()
+    public function actionViewExamMarkRoom()
     {
-        $dataProvider = new ArrayDataProvider();
-        $model = new ExamRooms();
-        $exams = Exam::find()->all();
-        $rooms = ExamRooms::find()->all();
-        $dataRooms = ArrayHelper::map($rooms, 'id', 'name');
-        $dataExams = ArrayHelper::map($exams, 'id', 'name');
 
-        if ($model->load(Yii::$app->request->post())) {
-            $dataProvider = new ActiveDataProvider([
-                'query' => ExamRooms::find()->where(['id' => $model->id]),
-            ]);
+        // data exam
+        $exams = Exam::find()->all();
+        $dataExams = ArrayHelper::map($exams, 'id', 'name');
+        if (count($exams) < 1) {
+            Yii::$app->getSession()->setFlash('error', 'Kì thi chưa được tạo trên hệ thống');
         }
 
-        return $this->render('index', [
-            'dataProvider' => $dataProvider,
+        $model = new ExamStudentRoom();
+        if ($model->load(Yii::$app->request->post())) {
+            // data room
+            $rooms = ExamRoom::find()->where(['exam_id' => $model->exam_id])->all();
+            $dataProvider = new ActiveDataProvider([
+                'query' => ExamStudentRoom::find()->where(['exam_room_id' => $model->exam_room_id]),
+            ]);
+        } else {
+            // data room
+            $rooms = ExamRoom::find()->where(['exam_id' => $exams[0]->id])->all();
+            $dataProvider = new ActiveDataProvider([
+                'query' => ExamStudentRoom::find()->where(['exam_room_id' => (count($rooms) < 1) ? -1 : $rooms[0]->id]),
+            ]);
+        }
+        $dataRooms = ArrayHelper::map($rooms, 'id', 'name');
+        return $this->render('exam_mark', [
             'model' => $model,
+            'dataProvider' => $dataProvider,
             'dataRooms' => $dataRooms,
             'dataExams' => $dataExams,
         ]);
@@ -99,11 +112,10 @@ class ExamController extends Controller
         ]);
         $subjects->pagination = false;
 
+        // delete temp table exams
+        $this->deleteTempTableExams();
+
         // exam room
-        QueueDetailExamRoom::deleteAll([
-            'ip' => Yii::$app->request->getUserIP(),
-            'created_by' => Yii::$app->user->id
-        ]);
         $queueDetailExamRoom = new ActiveDataProvider([
             'query' => QueueDetailExamRoom::find(-1)
         ]);
@@ -136,17 +148,65 @@ class ExamController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Exam();
-        if ($model->load(Yii::$app->request->post())) {
+        $exam = new Exam();
+        if ($exam->load(Yii::$app->request->post())) {
 
             // create exam
-            $model->created_by = Yii::$app->user->id;
-            $model->created_at = time();
-            $model->start_date = strtotime($model->start_date);
-            $model->status = Exam::EXAM_YET_STARTED;
-            $model->save();
+            $exam->created_by = Yii::$app->user->id;
+            $exam->created_at = time();
+            $exam->start_date = strtotime($exam->start_date);
+            $exam->status = Exam::EXAM_YET_STARTED;
+            $exam->save();
 
             // create exam room
+            $queueExamRooms = QueueExamRoom::find([
+                'ip' => Yii::$app->request->getUserIP(),
+                'created_by' => Yii::$app->user->id
+            ])->all();
+            $queueExamRoomMap2examRoom = array();
+            foreach ($queueExamRooms as $queueExamRoom) {
+                $examRoom = new ExamRoom();
+                $examRoom->created_at = time();
+                $examRoom->created_by = Yii::$app->user->id;
+                $examRoom->name = $queueExamRoom->name;
+                $examRoom->exam_id = $exam->id;
+                $examRoom->save();
+                $queueExamRoomMap2examRoom[$queueExamRoom->id] = $examRoom->id;
+            }
+
+            // create exam room detail
+            $queueDetailExamRooms = QueueDetailExamRoom::find([
+                'ip' => Yii::$app->request->getUserIP(),
+                'created_by' => Yii::$app->user->id
+            ])->all();
+            foreach ($queueDetailExamRooms as $queueDetailExamRoom) {
+                $detailExamRoom = new DetailExamRoom();
+                $detailExamRoom->created_at = time();
+                $detailExamRoom->created_by = Yii::$app->user->id;
+                $detailExamRoom->subject_id = $queueDetailExamRoom->subject_id;
+                $detailExamRoom->location = $queueDetailExamRoom->location;
+                $detailExamRoom->supervisory = $queueDetailExamRoom->supervisory;
+                $detailExamRoom->exam_hour = $queueDetailExamRoom->exam_hour;
+                $detailExamRoom->exam_date = $queueDetailExamRoom->exam_date;
+                $detailExamRoom->exam_room_id = $queueExamRoomMap2examRoom[$queueDetailExamRoom->exam_room_id];
+                $detailExamRoom->save();
+            }
+
+            // create exam student room
+            $queueExamStudentRooms = QueueExamStudentRoom::find([
+                'ip' => Yii::$app->request->getUserIP(),
+                'created_by' => Yii::$app->user->id
+            ])->all();
+            foreach ($queueExamStudentRooms as $queueExamStudentRoom) {
+                $examStudentRoom = new ExamStudentRoom();
+                $examStudentRoom->created_at = time();
+                $examStudentRoom->created_by = Yii::$app->user->id;
+                $examStudentRoom->student_id = $queueExamStudentRoom->student_id;
+                $examStudentRoom->student_name = $queueExamStudentRoom->student_name;
+                $examStudentRoom->identification = $queueExamStudentRoom->identification;
+                $examStudentRoom->exam_room_id = $queueExamRoomMap2examRoom[$queueExamStudentRoom->exam_room_id];
+                $examStudentRoom->save();
+            }
 
             Yii::$app->getSession()->setFlash('success', 'Tạo mới kỳ thi thành công');
         }
@@ -224,23 +284,8 @@ class ExamController extends Controller
      */
     public function actionCreateQueueRooms()
     {
-        // Delete temp exam room
-        QueueExamRoom::deleteAll([
-            'ip' => Yii::$app->request->getUserIP(),
-            'created_by' => Yii::$app->user->id
-        ]);
-
-        // Delete temp exam detail room
-        QueueDetailExamRoom::deleteAll([
-            'ip' => Yii::$app->request->getUserIP(),
-            'created_by' => Yii::$app->user->id
-        ]);
-
-        // Delete temp exam student room
-        QueueExamStudentRoom::deleteAll([
-            'ip' => Yii::$app->request->getUserIP(),
-            'created_by' => Yii::$app->user->id
-        ]);
+        // delete temp table exams
+        $this->deleteTempTableExams();
 
         // get identification number
         $session = Yii::$app->getSession();
@@ -346,8 +391,14 @@ class ExamController extends Controller
                 ->orderBy('room_name', 'subject_name')
         ]);
 
-        return $this->renderAjax('queue_detail_exam_room', [
-            'queueDetailExamRoom' => $queueDetailExamRoom
+        // queue exam room
+        $queueExamRoom = new ActiveDataProvider([
+            'query' => QueueExamRoom::find()->orderBy('name')
+        ]);
+
+        return $this->renderAjax('exam_room', [
+            'queueDetailExamRoom' => $queueDetailExamRoom,
+            'queueExamRoom' => $queueExamRoom
         ]);
     }
 
@@ -364,6 +415,30 @@ class ExamController extends Controller
         $dataProvider->pagination = false;
         return $this->renderAjax('students-list', [
             'dataProvider' => $dataProvider
+        ]);
+    }
+
+    /**
+     *
+     */
+    private function deleteTempTableExams()
+    {
+        // Delete temp exam room
+        QueueExamRoom::deleteAll([
+            'ip' => Yii::$app->request->getUserIP(),
+            'created_by' => Yii::$app->user->id
+        ]);
+
+        // Delete temp exam detail room
+        QueueDetailExamRoom::deleteAll([
+            'ip' => Yii::$app->request->getUserIP(),
+            'created_by' => Yii::$app->user->id
+        ]);
+
+        // Delete temp exam student room
+        QueueExamStudentRoom::deleteAll([
+            'ip' => Yii::$app->request->getUserIP(),
+            'created_by' => Yii::$app->user->id
         ]);
     }
 }

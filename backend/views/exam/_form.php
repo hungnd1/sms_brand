@@ -214,6 +214,36 @@ $this->registerJs($js, View::POS_END);
                         <?= Html::button('Cấu hình SBD', ['class' => 'btn btn-success', 'onclick' => 'showConfigSBD();']) ?>
                     </div>
                     <div class="div_rooms">
+<!--                        --><?//= GridView::widget([
+//                            'dataProvider' => $queueExamRoom,
+//                            'id' => 'grid-queue-exam-room-id',
+//                            'columns' => [
+//                                // STT
+//                                [
+//                                    'class' => '\kartik\grid\SerialColumn',
+//                                    'header' => 'STT',
+//                                    'width' => '5%'
+//                                ],
+//                                // Name
+//                                [
+//                                    'format' => 'raw',
+//                                    'class' => '\kartik\grid\DataColumn',
+//                                    'label' => 'DS phòng thi',
+//                                    'value' => '',
+//                                ],
+//                                // Students
+//                                [
+//                                    'format' => 'raw',
+//                                    'class' => '\kartik\grid\DataColumn',
+//                                    'label' => 'Học sinh',
+//                                    'value' => '',
+//                                ],
+//                                [
+//                                    'class' => 'kartik\grid\ActionColumn',
+//                                    'template' => '{view} {update}',
+//                                ],
+//                            ],
+//                        ]); ?>
                     </div>
                 </div>
             </td>

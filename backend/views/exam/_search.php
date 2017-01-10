@@ -5,15 +5,32 @@ use kartik\widgets\Select2;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ExamRooms */
+/* @var $model common\models\ExamStudentRoom */
 /* @var $form yii\widgets\ActiveForm */
+?>
+
+<?php
+$examId = Html::getInputId($model, 'exam_id');
+$examRoomId = Html::getInputId($model, 'exam_room_id');
+
+$js = <<<JS
+    $("#$examId").change(function () {
+        $("#my_form").submit();
+    });
+
+    $("#$examRoomId").change(function () {
+        $("#my_form").submit();
+    });
+JS;
+$this->registerJs($js, \yii\web\View::POS_READY);
 ?>
 
 <div class="exam-search">
 
     <?php $form = ActiveForm::begin([
-        'action' => ['index'],
+        'action' => ['view-exam-mark-room'],
         'method' => 'post',
+        'id' => 'my_form'
     ]); ?>
 
     <div class="form-group">
@@ -32,7 +49,7 @@ use yii\helpers\Html;
                 </td>
                 <td style="padding-right: 10px">
                     <?=
-                    $form->field($model, 'id')->widget(Select2::classname(), [
+                    $form->field($model, 'exam_room_id')->widget(Select2::classname(), [
                         'data' => $dataRooms,
                         'pluginOptions' => [
                             'allowClear' => true,
@@ -43,11 +60,6 @@ use yii\helpers\Html;
                 </td>
             </tr>
         </table>
-
-        <?= Html::submitButton('Search', ['class' => 'btn btn-primary']) ?>
-
     </div>
-
     <?php ActiveForm::end(); ?>
-
 </div>
