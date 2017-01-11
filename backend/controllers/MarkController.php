@@ -8,6 +8,7 @@ use common\models\ContactDetail;
 use common\models\Mark;
 use common\models\Subject;
 use common\models\UserActivity;
+use kartik\widgets\ActiveForm;
 use PHPExcel_IOFactory;
 use Yii;
 use yii\data\ActiveDataProvider;
@@ -16,6 +17,7 @@ use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 use yii\web\UploadedFile;
 
 /**

@@ -16,6 +16,12 @@ use common\models\QueueExamRoom;
 use common\models\QueueExamRooms;
 use common\models\QueueExamStudentRoom;
 use common\models\Subject;
+use Exception;
+use kartik\widgets\ActiveForm;
+use PHPExcel_IOFactory;
+use PHPExcel_Style_Alignment;
+use PHPExcel_Style_Border;
+use PHPExcel_Style_Fill;
 use Yii;
 use common\models\Exam;
 use common\models\ExamSearch;
@@ -28,6 +34,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\Response;
 use yii\web\Session;
+use yii\web\UploadedFile;
 
 /**
  * ExamController implements the CRUD actions for Exam model.
@@ -55,34 +62,56 @@ class ExamController extends Controller
      */
     public function actionViewExamMarkRoom()
     {
-
         // data exam
-        $exams = Exam::find()->all();
+        $exams = Exam::find()->orderBy('name')->all();
         $dataExams = ArrayHelper::map($exams, 'id', 'name');
         if (count($exams) < 1) {
             Yii::$app->getSession()->setFlash('error', 'Kì thi chưa được tạo trên hệ thống');
         }
 
         $model = new ExamStudentRoom();
+        $examRoomId = -1;
         if ($model->load(Yii::$app->request->post())) {
             // data room
-            $rooms = ExamRoom::find()->where(['exam_id' => $model->exam_id])->all();
+            $rooms = ExamRoom::find()->where(['exam_id' => $model->exam_id])->orderBy('name')->all();
+            $examRoomId = $model->exam_room_id;
+            if (strcmp($model->action, 'action4exam_id') == 0) {
+                $examRoomId = (count($rooms) < 1) ? -1 : $rooms[0]->id;
+            }
+
             $dataProvider = new ActiveDataProvider([
-                'query' => ExamStudentRoom::find()->where(['exam_room_id' => $model->exam_room_id]),
+                'query' => ExamStudentRoom::find()->where(['exam_room_id' => $examRoomId]),
             ]);
         } else {
             // data room
-            $rooms = ExamRoom::find()->where(['exam_id' => $exams[0]->id])->all();
+            $rooms = ExamRoom::find()->where(['exam_id' => $exams[0]->id])->orderBy('name')->all();
+            $model->exam_id = $exams[0]->id;
+            $examRoomId = (count($rooms) < 1) ? -1 : $rooms[0]->id;
             $dataProvider = new ActiveDataProvider([
-                'query' => ExamStudentRoom::find()->where(['exam_room_id' => (count($rooms) < 1) ? -1 : $rooms[0]->id]),
+                'query' => ExamStudentRoom::find()->where(['exam_room_id' => $examRoomId]),
             ]);
         }
+
+        // find subjects
+        $subjectExamRoomIds = DetailExamRoom::find()
+            ->select('subject_id')
+            ->where(['exam_room_id' => $examRoomId])
+            ->all();
+        $subjectIds = array();
+        foreach ($subjectExamRoomIds as $subjectExamRoomId) {
+            array_push($subjectIds, $subjectExamRoomId['subject_id']);
+        }
+        $subjects = Subject::find()
+            ->where(['id' => $subjectIds])
+            ->orderBy('name')
+            ->all();
         $dataRooms = ArrayHelper::map($rooms, 'id', 'name');
         return $this->render('exam_mark', [
             'model' => $model,
             'dataProvider' => $dataProvider,
             'dataRooms' => $dataRooms,
             'dataExams' => $dataExams,
+            'subjects' => $subjects
         ]);
     }
 
@@ -440,5 +469,391 @@ class ExamController extends Controller
             'ip' => Yii::$app->request->getUserIP(),
             'created_by' => Yii::$app->user->id
         ]);
+    }
+
+    /**
+     * view page upload mark summary
+     */
+    public function actionViewUpload()
+    {
+        $model = new ExamStudentRoom();
+        $model->setScenario('admin_create_update');
+
+        $exam_id = Yii::$app->getRequest()->getQueryParam('exam_id');
+        $rooms = ExamRoom::find()->where(['exam_id' => $exam_id])->orderBy('name')->all();
+        $dataRooms = ArrayHelper::map($rooms, 'id', 'name');
+
+        return $this->render('upload', [
+            'model' => $model,
+            'dataRooms' => $dataRooms
+        ]);
+    }
+
+    /**
+     * @return string
+     */
+    public function actionUpload()
+    {
+
+        $model = new ExamStudentRoom();
+        $check = 0;
+
+        $post = Yii::$app->request->post();
+
+        // download template
+        if ($model->load($post) && strcmp($model->action, "download") == 0) {
+            $this->downloadTemplate($model);
+            return $this->redirect(['view-exam-mark-room']);
+        }
+
+        if (Yii::$app->request->isAjax && isset($post['ajax']) && $model->load($post)) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            return ActiveForm::validate($model);
+        }
+
+        if ($model->load($post)) {
+
+            $file_download = UploadedFile::getInstance($model, 'file');
+
+            if ($file_download) {
+
+                $file_name = Yii::$app->user->id . '.' . uniqid() . time() . '.' . $file_download->extension;
+                $tmp = Yii::getAlias('@backend') . '/web/' . Yii::getAlias('@file_downloads') . '/';
+
+                if (!file_exists($tmp)) {
+                    mkdir($tmp, 0777, true);
+                }
+
+                if ($file_download->saveAs($tmp . $file_name)) {
+                    $model->file = $file_name;
+                }
+
+                try {
+                    // validate choose exam room
+                    $examRoom = ExamRoom::findOne(['id' => $model->exam_room_id]);
+                    if (is_null($examRoom)) {
+                        Yii::$app->getSession()->setFlash('error', 'Bạn chưa chọn phòng để tải file mẫu');
+                        return $this->redirect(['view-exam-mark-room']);
+                    }
+
+                    $inputFileType = \PHPExcel_IOFactory::identify($tmp . $file_name);
+                    $objReader = \PHPExcel_IOFactory::createReader($inputFileType);
+                    $objPHPExcel = $objReader->load($tmp . $file_name);
+                    $sheet = $objPHPExcel->getSheet(0);
+
+                    $highestRow = $sheet->getHighestRow();
+                    $subjectExamRoomIds = DetailExamRoom::find()
+                        ->select('subject_id')
+                        ->where(['exam_room_id' => $examRoom->id])
+                        ->all();
+                    $count = count($subjectExamRoomIds);
+
+                    for ($row = 10; $row <= $highestRow; $row++) {
+
+                        $rowData = $sheet->rangeToArray('A' . $row . ':' . chr($count + ord('B')) . $row, null, true, false);
+                        $examStudentRoom = ExamStudentRoom::findOne(['identification' => $rowData[0][0], 'exam_room_id' => $examRoom->id]);
+                        $examStudentRoom->updated_at = time();
+                        $examStudentRoom->updated_by = Yii::$app->user->id;
+
+                        // set marks
+                        $mark_str = '';
+                        for ($i = 2; $i < 2 + $count; $i++) {
+                            if (!is_null($rowData[0][$i])) {
+                                $mark_str = $mark_str . $sheet->getCell(chr(ord('A') + $i) . '8')->getValue() . ':' . $rowData[0][$i] . ';';
+                            }
+                        }
+                        $examStudentRoom->marks = $mark_str;
+                        if ($examStudentRoom->save(false)) {
+                            $check = 1;
+                        }
+                    }
+
+                    if ($check) {
+                        Yii::$app->getSession()->setFlash('success', 'Upload thành công');
+                    } else {
+                        Yii::$app->getSession()->setFlash('error', 'Upload không thành công');
+                    }
+                } catch (Exception $ex) {
+                }
+            } else {
+                Yii::$app->getSession()->setFlash('error', 'Bạn chưa chọn file tải mẫu để upload');
+                return $this->redirect(['view-exam-mark-room']);
+            }
+        }
+        return $this->redirect(['view-exam-mark-room']);
+    }
+
+    /**
+     *
+     */
+    public function downloadTemplate($model)
+    {
+        $file_name = 'Exam_Mark_Upload.xls';
+        $tmp = Yii::getAlias('@backend') . '/web/' . Yii::getAlias('@file_template') . '/';
+        $file = $tmp . $file_name;
+
+        if (file_exists($file)) {
+
+            try {
+
+                $inputFileType = \PHPExcel_IOFactory::identify($tmp . $file_name);
+                $objReader = \PHPExcel_IOFactory::createReader($inputFileType);
+                $objPHPExcel = $objReader->load($tmp . $file_name);
+                $sheet = $objPHPExcel->getSheet(0);
+
+                // validate choose exam room
+                $examRoom = ExamRoom::findOne(['id' => $model->exam_room_id]);
+                $exam = Exam::findOne(['id' => $examRoom->exam_id]);
+
+                if (is_null($examRoom)) {
+                    Yii::$app->getSession()->setFlash('error', 'Bạn chưa chọn phòng để tải file mẫu');
+                    return;
+                }
+
+                // set exam
+                $title_ = $sheet->getCell('A1')->getValue();
+                $sheet->setCellValue('A1', $title_ = str_replace("[exam]", $exam->name, $title_));
+
+                // set room
+                $title_ = $sheet->getCell('A7')->getValue();
+                $sheet->setCellValue('A7', $title_ = str_replace("[room]", $examRoom->name, $title_));
+
+                $column = ord('C');
+                $styleArray = array(
+                    'fill' => array(
+                        'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                        'color' => array('rgb' => '0070C0')
+                    ),
+                    'borders' => array(
+                        'allborders' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    ),
+                    'font' => array(
+                        'color' => array('rgb' => 'FFFFFF'),
+                        'size' => 9
+                    ),
+                    'alignment' => array(
+                        'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER
+                    ),
+                );
+
+                // find subjects
+                $subjectExamRoomIds = DetailExamRoom::find()
+                    ->select('subject_id')
+                    ->where(['exam_room_id' => $examRoom->id])
+                    ->all();
+                $subjectIds = array();
+                foreach ($subjectExamRoomIds as $subjectExamRoomId) {
+                    array_push($subjectIds, $subjectExamRoomId['subject_id']);
+                }
+                $subjects = Subject::find()
+                    ->where(['id' => $subjectIds])
+                    ->orderBy('name')
+                    ->all();
+
+                foreach ($subjects as $item) {
+                    $sheet->setCellValue(chr($column) . '9', $item->name);
+                    $sheet->setCellValue(chr($column) . '8', $item->id);;
+                    $sheet->getStyle(chr($column) . '9')->applyFromArray($styleArray);
+                    $column++;
+                }
+
+                // XL
+                //$sheet->setCellValue(chr($column) . '9', 'XL');
+                //$sheet->getStyle(chr($column) . '9')->applyFromArray($styleArray);
+
+                $row = 0;
+                $examStudentRooms = ExamStudentRoom::find()
+                    ->where(['exam_room_id' => $examRoom->id])
+                    ->all();
+                foreach ($examStudentRooms as $examStudentRoom) {
+                    $sheet->setCellValue('A' . ($row + 10), $examStudentRoom->identification);
+                    $sheet->setCellValue('B' . ($row + 10), $examStudentRoom->student_name);
+                    $row++;
+                }
+
+                // set file name upload
+                $file_name_upload = "Điểm_thi_";
+                $file_name_upload = $file_name_upload . $exam->name;
+                $file_name_upload = $file_name_upload . "_" . $examRoom->name;
+                $file_name_upload = $file_name_upload . "_Upload.xls";
+
+                header("Content-Length: " . filesize($file));
+                header("Content-type: application/octet-stream");
+                header("Content-disposition: attachment; filename=" . basename($file_name_upload));
+                header('Expires: 0');
+                header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+                ob_clean();
+                flush();
+
+                $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+                $objWriter->save('php://output');
+
+            } catch (Exception $ex) {
+            }
+        } else {
+            Yii::$app->getSession()->setFlash('error', 'File is not exits');
+        }
+    }
+
+    /**
+     * view page export mark summary
+     */
+    public function actionViewExport()
+    {
+        $model = new ExamStudentRoom();
+        $model->setScenario('admin_create_update');
+
+        $exam_id = Yii::$app->getRequest()->getQueryParam('exam_id');
+        $rooms = ExamRoom::find()->where(['exam_id' => $exam_id])->orderBy('name')->all();
+        $dataRooms = ArrayHelper::map($rooms, 'id', 'name');
+
+        return $this->render('export', [
+            'model' => $model,
+            'dataRooms' => $dataRooms
+        ]);
+    }
+
+    /**
+     * export mark summary
+     */
+    public function actionExport()
+    {
+        $model = new ExamStudentRoom();
+        $file_name = 'Mark_Summary_List.xls';
+        $tmp = Yii::getAlias('@backend') . '/web/' . Yii::getAlias('@file_template') . '/';
+        $file = $tmp . $file_name;
+
+        if (file_exists($file) && $model->load(Yii::$app->request->post())) {
+
+            try {
+
+                $inputFileType = \PHPExcel_IOFactory::identify($tmp . $file_name);
+                $objReader = \PHPExcel_IOFactory::createReader($inputFileType);
+                $objPHPExcel = $objReader->load($tmp . $file_name);
+                $sheet = $objPHPExcel->getSheet(0);
+
+                $subjects = Subject::find()->where(['id' => $model->subject_id])->all();
+                $class = Contact::findOne($model->class_id);
+                $students = ContactDetail::find()->where(['contact_id' => $model->class_id])->all();
+
+                // validate class
+                if (is_null($class)) {
+                    Yii::$app->getSession()->setFlash('error', 'Lớp chưa tạo trên hệ thống');
+                    return;
+                }
+
+                // set semester
+                $title_ = $sheet->getCell('A1')->getValue();
+                $sheet->setCellValue('A1', $title_ = str_replace("[semester]", $model->semester == 1 ? "1" : "2", $title_));
+                $sheet->setCellValue('A1', $title_ = str_replace("[class]", $class->contact_name, $title_));
+                $sheet->mergeCells('A1:' . chr(ord('C') + count($subjects)) . '1');
+                $sheet->getStyle('A1')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+
+                // set sheet name
+                $sheet->setTitle("TKHK" . $model->semester . '-' . $class->contact_name);
+
+                $column = ord('D');
+                $styleHeader = array(
+                    'fill' => array(
+                        'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                        'color' => array('rgb' => '0070C0')
+                    ),
+                    'font' => array(
+                        'color' => array('rgb' => 'FFFFFF'),
+                        'size' => 13
+                    ),
+                    'alignment' => array(
+                        'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER
+                    ),
+                    'borders' => array(
+                        'allborders' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    )
+                );
+
+                $styleRow = array(
+                    'font' => array(
+                        'size' => 13
+                    ),
+                );
+
+                // set mark summary
+                $sheet->setCellValue('C2', 'Điểm tổng kết');
+                $sheet->setCellValue('C3', 'HK' . $model->semester);
+                $sheet->getStyle('C2')->applyFromArray($styleHeader);
+                $sheet->getStyle('C3')->applyFromArray($styleHeader);
+
+                // set mark summary subject
+                $subjects_column = array();
+                foreach ($subjects as $item) {
+                    $sheet->setCellValue(chr($column) . '2', $item->name);
+                    $sheet->setCellValue(chr($column) . '3', 'HK' . $model->semester);
+                    $sheet->getStyle(chr($column) . '2')->applyFromArray($styleHeader);
+                    $sheet->getStyle(chr($column) . '3')->applyFromArray($styleHeader);
+                    $subjects_column[$item->id] = chr($column);
+                    $column++;
+                }
+
+                $row = 0;
+                $students_id = array();
+                foreach ($students as $item) {
+                    array_push($students_id, $item->id);
+                }
+
+                $marks_summary_tmp = MarkSummary::find()->where(['student_id' => $students_id, 'class_id' => $model->class_id, 'semester' => $model->semester])->all();
+                $marks_summary = array();
+
+                foreach ($marks_summary_tmp as $item) {
+                    $marks_summary[$item->student_id] = $item;
+                }
+
+                foreach ($students as $item) {
+
+                    $sheet->setCellValue('A' . ($row + 4), $row + 1);
+                    $sheet->setCellValue('B' . ($row + 4), $item->fullname);
+                    $sheet->getStyle('A' . ($row + 4))->applyFromArray($styleRow);
+                    $sheet->getStyle('B' . ($row + 4))->applyFromArray($styleRow);
+
+                    if (!isset($marks_summary[$item->id])) {
+                        $row++;
+                        continue;
+                    }
+
+                    $marks = $marks_summary[$item->id]->marks;
+                    $marks = explode(';', $marks);
+                    foreach ($marks as $mark) {
+                        $tmp = explode(':', $mark);
+                        if (isset($subjects_column[$tmp[0]])) {
+                            $sheet->setCellValue($subjects_column[$tmp[0]] . ($row + 4), $tmp[1]);
+                            $sheet->getStyle($subjects_column[$tmp[0]] . ($row + 4))->applyFromArray($styleRow);
+                        }
+                    }
+                    $row++;
+                }
+
+                // set file name upload
+                $file_name_upload = "Danh_sach_diem_tong_ket_hoc_ky_";
+                $file_name_upload = $file_name_upload . ($model->semester) . ".xls";
+
+                header("Content-Length: " . filesize($file));
+                header("Content-type: application/octet-stream");
+                header("Content-disposition: attachment; filename=" . basename($file_name_upload));
+                header('Expires: 0');
+                header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+                ob_clean();
+                flush();
+
+                $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+                $objWriter->save('php://output');
+
+            } catch (Exception $ex) {
+            }
+        } else {
+            Yii::$app->getSession()->setFlash('error', 'File is not exits');
+        }
+        return $this->redirect(['index']);
     }
 }

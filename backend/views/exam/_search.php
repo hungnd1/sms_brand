@@ -15,10 +15,12 @@ $examRoomId = Html::getInputId($model, 'exam_room_id');
 
 $js = <<<JS
     $("#$examId").change(function () {
+        $('#action').val('action4exam_id');
         $("#my_form").submit();
     });
 
     $("#$examRoomId").change(function () {
+        $('#action').val('action4exam_room_id');
         $("#my_form").submit();
     });
 JS;
@@ -36,6 +38,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
     <div class="form-group">
         <table>
             <tr>
+                <?= $form->field($model, 'action')->hiddenInput(['id' => 'action', 'value' => ''])->label(false) ?>
                 <td style="padding-right: 10px">
                     <?=
                     $form->field($model, 'exam_id')->widget(Select2::classname(), [
