@@ -222,6 +222,12 @@ $this->registerJs("Layout.init();");
                     'items' => [
                         [
                             'encode' => false,
+                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Nhận xét mẫu'),
+                            'url' => ['template-comment/index'],
+                            'require_auth' => true,
+                        ],
+                        [
+                            'encode' => false,
                             'label' => '<i class="icon-film"></i>'.Yii::t('app','Nhận xét ngày'),
                             'url' => ['contact-detail/comment'],
                             'require_auth' => true,
