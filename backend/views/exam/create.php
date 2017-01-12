@@ -23,9 +23,10 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="portlet-body form">
                 <?= $this->render('_form', [
                     'model' => $model,
-                    'searchModel' => $searchModel,
-                    'dataProvider' => $dataProvider,
-                    'subjects' => $subjects
+                    'identificationNumber' => $identificationNumber,
+                    'subjects' => $subjects,
+                    'classes' => $classes,
+                    'queueDetailExamRoom' => $queueDetailExamRoom
                 ]) ?>
             </div>
         </div>

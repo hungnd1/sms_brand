@@ -16,13 +16,13 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
 
 <script>
     function showClass(id) {
-        $('#popupClass').modal('show');
         $.ajax({
             url: '?r=history-class-up%2Fshow&id=' + id,
             success: function(data) {
                 $('#myModalContent').html(data);
             }
         });
+        $('#popupClass').modal('show');
     }
 </script>
 

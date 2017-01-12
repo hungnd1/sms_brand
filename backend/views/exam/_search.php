@@ -1,45 +1,68 @@
 <?php
 
+use kartik\widgets\ActiveForm;
+use kartik\widgets\Select2;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\ExamSearch */
+/* @var $model common\models\ExamStudentRoom */
 /* @var $form yii\widgets\ActiveForm */
+?>
+
+<?php
+$examId = Html::getInputId($model, 'exam_id');
+$examRoomId = Html::getInputId($model, 'exam_room_id');
+
+$js = <<<JS
+    $("#$examId").change(function () {
+        $('#action').val('action4exam_id');
+        $("#my_form").submit();
+    });
+
+    $("#$examRoomId").change(function () {
+        $('#action').val('action4exam_room_id');
+        $("#my_form").submit();
+    });
+JS;
+$this->registerJs($js, \yii\web\View::POS_READY);
 ?>
 
 <div class="exam-search">
 
     <?php $form = ActiveForm::begin([
-        'action' => ['index'],
-        'method' => 'get',
+        'action' => ['view-exam-mark-room'],
+        'method' => 'post',
+        'id' => 'my_form'
     ]); ?>
 
-    <?= $form->field($model, 'id') ?>
-
-    <?= $form->field($model, 'name') ?>
-
-    <?= $form->field($model, 'semester') ?>
-
-    <?= $form->field($model, 'start_date') ?>
-
-    <?= $form->field($model, 'status') ?>
-
-    <?php // echo $form->field($model, 'description') ?>
-
-    <?php // echo $form->field($model, 'created_at') ?>
-
-    <?php // echo $form->field($model, 'updated_at') ?>
-
-    <?php // echo $form->field($model, 'created_by') ?>
-
-    <?php // echo $form->field($model, 'updated_by') ?>
-
     <div class="form-group">
-        <?= Html::submitButton('Search', ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton('Reset', ['class' => 'btn btn-default']) ?>
+        <table>
+            <tr>
+                <?= $form->field($model, 'action')->hiddenInput(['id' => 'action', 'value' => ''])->label(false) ?>
+                <td style="padding-right: 10px">
+                    <?=
+                    $form->field($model, 'exam_id')->widget(Select2::classname(), [
+                        'data' => $dataExams,
+                        'pluginOptions' => [
+                            'allowClear' => false,
+                            'width' => '150px'
+                        ],
+                    ])->label('Kỳ thi');
+                    ?>
+                </td>
+                <td style="padding-right: 10px">
+                    <?=
+                    $form->field($model, 'exam_room_id')->widget(Select2::classname(), [
+                        'data' => $dataRooms,
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'width' => '200px'
+                        ],
+                    ])->label('Phòng thi');
+                    ?>
+                </td>
+            </tr>
+        </table>
     </div>
-
     <?php ActiveForm::end(); ?>
-
 </div>
