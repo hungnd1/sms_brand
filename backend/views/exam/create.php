@@ -26,7 +26,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'identificationNumber' => $identificationNumber,
                     'subjects' => $subjects,
                     'classes' => $classes,
-                    'queueDetailExamRoom' => $queueDetailExamRoom
+                    'queueDetailExamRoom' => $queueDetailExamRoom,
+                    'queueExamRoom' => $queueExamRoom
                 ]) ?>
             </div>
         </div>

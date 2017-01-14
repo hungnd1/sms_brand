@@ -7,6 +7,7 @@ use kartik\widgets\ActiveForm;
 use kartik\widgets\Select2;
 use kartik\grid\GridView;
 use yii\web\View;
+use yii\widgets\Pjax;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Exam */
@@ -23,6 +24,7 @@ ToastAsset::config($this, [
 $tableSubjectId = "tableSubjectId";
 $tableClassId = "tableClassId";
 $createQueueRooms = \yii\helpers\Url::to(['exam/create-queue-rooms']);
+$deleteQueueRooms = \yii\helpers\Url::to(['exam/delete-queue-rooms']);
 
 $js = <<<JS
 
@@ -42,6 +44,22 @@ $js = <<<JS
         $('#popupSBD').modal('show');
     }
     
+    // delte queue room
+    function  deleteQueueRoom(exam_room_id) {
+         jQuery.post(
+                '{$deleteQueueRooms}',
+                {exam_room_id:exam_room_id}
+            )
+            .done(function(result) {
+                $("#grid-subjects-id").html(result);
+                var div_room_new = $("#div_rooms_new").html();
+                $("#div_rooms").html(div_room_new);
+            })
+            .fail(function() {
+                toastr.error("server error");
+        });
+    }
+    
     // sumbit form
     function submitForm() {
         $("#create-form-id").submit();
@@ -57,8 +75,8 @@ $js = <<<JS
             )
             .done(function(result) {
                 $("#grid-subjects-id").html(result);
-                jQuery.pjax.reload({container:'#{$tableSubjectId}'});
-                jQuery.pjax.reload({container:'#{$tableClassId}'});
+                var div_room_new = $("#div_rooms_new").html();
+                $("#div_rooms").html(div_room_new);
             })
             .fail(function() {
                 toastr.error("server error");
@@ -99,6 +117,7 @@ $this->registerJs($js, View::POS_END);
         margin: 0 0 15px 2.5%;
         border: 1px solid rgb(204, 204, 204) !important;
     }
+
 </style>
 
 <div class="form-body">
@@ -167,6 +186,7 @@ $this->registerJs($js, View::POS_END);
                 <?= GridView::widget([
                     'id' => $tableClassId,
                     'dataProvider' => $classes,
+                    'pjax' => true,
                     'columns' => [
                         // Checkbox
                         [
@@ -188,6 +208,7 @@ $this->registerJs($js, View::POS_END);
                 <?= GridView::widget([
                     'id' => $tableSubjectId,
                     'dataProvider' => $subjects,
+                    'pjax' => true,
                     'columns' => [
                         // Checkbox
                         [
@@ -213,37 +234,42 @@ $this->registerJs($js, View::POS_END);
                         <?= Html::button('Tạo mới', ['class' => 'btn btn-success', 'onclick' => 'createRoom();']) ?>
                         <?= Html::button('Cấu hình SBD', ['class' => 'btn btn-success', 'onclick' => 'showConfigSBD();']) ?>
                     </div>
-                    <div class="div_rooms">
-<!--                        --><?//= GridView::widget([
-//                            'dataProvider' => $queueExamRoom,
-//                            'id' => 'grid-queue-exam-room-id',
-//                            'columns' => [
-//                                // STT
-//                                [
-//                                    'class' => '\kartik\grid\SerialColumn',
-//                                    'header' => 'STT',
-//                                    'width' => '5%'
-//                                ],
-//                                // Name
-//                                [
-//                                    'format' => 'raw',
-//                                    'class' => '\kartik\grid\DataColumn',
-//                                    'label' => 'DS phòng thi',
-//                                    'value' => '',
-//                                ],
-//                                // Students
-//                                [
-//                                    'format' => 'raw',
-//                                    'class' => '\kartik\grid\DataColumn',
-//                                    'label' => 'Học sinh',
-//                                    'value' => '',
-//                                ],
-//                                [
-//                                    'class' => 'kartik\grid\ActionColumn',
-//                                    'template' => '{view} {update}',
-//                                ],
-//                            ],
-//                        ]); ?>
+
+                    <div class="div_rooms" id="div_rooms">
+                        <?= GridView::widget([
+                            'dataProvider' => $queueExamRoom,
+                            'pjax' => true,
+                            'columns' => [
+                                // STT
+                                [
+                                    'class' => '\kartik\grid\SerialColumn',
+                                    'header' => 'STT',
+                                    'width' => '5%'
+                                ],
+                                // Name
+                                [
+                                    'format' => 'raw',
+                                    'class' => '\kartik\grid\DataColumn',
+                                    'label' => 'DS phòng thi',
+                                    'value' => function ($model) {
+                                        return $model->name;
+                                    }
+                                ],
+                                // Students
+                                [
+                                    'format' => 'raw',
+                                    'class' => '\kartik\grid\DataColumn',
+                                    'label' => 'Số thí sinh',
+                                    'value' => function ($model) {
+                                        return $model->number_student;
+                                    }
+                                ],
+                                [
+                                    'class' => 'kartik\grid\ActionColumn',
+                                    'template' => '{delete}',
+                                ],
+                            ],
+                        ]); ?>
                     </div>
                 </div>
             </td>
@@ -255,6 +281,7 @@ $this->registerJs($js, View::POS_END);
         <?= GridView::widget([
             'dataProvider' => $queueDetailExamRoom,
             'id' => 'grid-subjects-id',
+            'pjax' => true,
             'columns' => [
                 // STT
                 [
@@ -267,49 +294,68 @@ $this->registerJs($js, View::POS_END);
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'DS phòng thi',
-                    'value' => '',
+                    'value' => function ($model) {
+                        return $model->room_name;
+                    },
+                    'group' => true,
                 ],
                 // Students
                 [
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'Học sinh',
-                    'value' => '',
+                    'value' => function ($model) {
+                        $rs = $model->room_student .
+                            ' <a href="javascript: showExamStudentRoom(' . $model->exam_room_id . ');" style="text-decoration: none; color: blue">(Chi tiết)</a>';
+                        return $rs;
+                    },
+                    'group' => true,
+                    'subGroupOf' => 1
                 ],
                 // Subjects
                 [
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'Môn thi',
-                    'value' => '',
+                    'value' => function ($model) {
+                        return $model->subject_name;
+                    },
                 ],
                 // Locations
                 [
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'Địa điểm',
-                    'value' => '',
+                    'value' => function ($model) {
+                        return $model->location;
+                    },
                 ],
                 // Supervisory
                 [
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'Giáo viên coi thi',
-                    'value' => '',
+                    'value' => function ($model) {
+                        return $model->supervisory;
+                    },
                 ],
                 // Exam hours
                 [
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'Giờ thi',
-                    'value' => '',
+                    'value' => function ($model) {
+                        return $model->exam_hour;
+                    },
                 ],
                 // Exam dates
                 [
                     'format' => 'raw',
                     'class' => '\kartik\grid\DataColumn',
                     'label' => 'Ngày thi',
-                    'value' => '',
+                    'value' => function ($model) {
+                        return $model->exam_date;
+                    },
                 ],
             ],
         ]); ?>

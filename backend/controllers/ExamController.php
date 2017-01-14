@@ -11,6 +11,7 @@ use common\models\ExamRooms;
 use common\models\ExamStudentRoom;
 use common\models\IdentificationNumber;
 use common\models\Mark;
+use common\models\MarkType;
 use common\models\QueueDetailExamRoom;
 use common\models\QueueExamRoom;
 use common\models\QueueExamRooms;
@@ -24,16 +25,13 @@ use PHPExcel_Style_Border;
 use PHPExcel_Style_Fill;
 use Yii;
 use common\models\Exam;
-use common\models\ExamSearch;
 use yii\data\ActiveDataProvider;
-use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
-use yii\validators\InlineValidator;
+use yii\helpers\Json;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\Response;
-use yii\web\Session;
 use yii\web\UploadedFile;
 
 /**
@@ -144,9 +142,15 @@ class ExamController extends Controller
         // delete temp table exams
         $this->deleteTempTableExams();
 
-        // exam room
+        // exam detail room
         $queueDetailExamRoom = new ActiveDataProvider([
             'query' => QueueDetailExamRoom::find(-1)
+        ]);
+
+
+        // exam room
+        $queueExamRoom = new ActiveDataProvider([
+            'query' => QueueExamRoom::find(-1)
         ]);
 
         return $this->render('create', [
@@ -154,7 +158,8 @@ class ExamController extends Controller
             'identificationNumber' => $idendificationNumber,
             'subjects' => $subjects,
             'classes' => $classes,
-            'queueDetailExamRoom' => $queueDetailExamRoom
+            'queueDetailExamRoom' => $queueDetailExamRoom,
+            'queueExamRoom' => $queueExamRoom
         ]);
     }
 
@@ -432,6 +437,49 @@ class ExamController extends Controller
     }
 
     /**
+     * @return array|string
+     */
+    public function actionDeleteQueueRooms()
+    {
+        $post = Yii::$app->request->post();
+        if (!isset($post['exam_room_id'])) {
+            return [
+                'success' => false,
+                'message' => 'Bad request'
+            ];
+        }
+
+        $exam_room_id = $post['exam_room_id'];
+        QueueExamStudentRoom::deleteAll(['exam_room_id' => $exam_room_id]);
+        QueueExamRoom::deleteAll(['id' => $exam_room_id]);
+        QueueDetailExamRoom::deleteAll(['exam_room_id' => $exam_room_id]);
+
+        // queue exam rooms
+        $queueDetailExamRoom = new ActiveDataProvider([
+            'query' => QueueDetailExamRoom::find()
+                ->select('queue_detail_exam_room.*, subject.name as subject_name,
+                    queue_exam_room.name as room_name, queue_exam_room.number_student as room_student')
+                ->leftJoin('subject', 'queue_detail_exam_room.subject_id = subject.id')
+                ->leftJoin('queue_exam_room', 'queue_detail_exam_room.exam_room_id = queue_exam_room.id')
+                ->where([
+                    'queue_detail_exam_room.ip' => Yii::$app->request->getUserIP(),
+                    'queue_detail_exam_room.created_by' => Yii::$app->user->id
+                ])
+                ->orderBy('room_name', 'subject_name')
+        ]);
+
+        // queue exam room
+        $queueExamRoom = new ActiveDataProvider([
+            'query' => QueueExamRoom::find()->orderBy('name')
+        ]);
+
+        return $this->renderAjax('exam_room', [
+            'queueDetailExamRoom' => $queueDetailExamRoom,
+            'queueExamRoom' => $queueExamRoom
+        ]);
+    }
+
+    /**
      * @return string
      */
     public function actionShowExamStudentRoom()
@@ -618,6 +666,10 @@ class ExamController extends Controller
                 $title_ = $sheet->getCell('A7')->getValue();
                 $sheet->setCellValue('A7', $title_ = str_replace("[room]", $examRoom->name, $title_));
 
+                // set start_date
+                $title_ = $sheet->getCell('C7')->getValue();
+                $sheet->setCellValue('C7', $title_ = str_replace("[start_date]", date("d-m-Y", $exam->start_date), $title_));
+
                 $column = ord('C');
                 $styleArray = array(
                     'fill' => array(
@@ -674,9 +726,9 @@ class ExamController extends Controller
                 }
 
                 // set file name upload
-                $file_name_upload = "Điểm_thi_";
+                $file_name_upload = "Điểm_kỳ_thi_";
                 $file_name_upload = $file_name_upload . $exam->name;
-                $file_name_upload = $file_name_upload . "_" . $examRoom->name;
+                $file_name_upload = $file_name_upload . "_phòng_" . $examRoom->name;
                 $file_name_upload = $file_name_upload . "_Upload.xls";
 
                 header("Content-Length: " . filesize($file));
@@ -721,7 +773,7 @@ class ExamController extends Controller
     public function actionExport()
     {
         $model = new ExamStudentRoom();
-        $file_name = 'Mark_Summary_List.xls';
+        $file_name = 'Exam_Mark_Export.xls';
         $tmp = Yii::getAlias('@backend') . '/web/' . Yii::getAlias('@file_template') . '/';
         $file = $tmp . $file_name;
 
@@ -734,109 +786,158 @@ class ExamController extends Controller
                 $objPHPExcel = $objReader->load($tmp . $file_name);
                 $sheet = $objPHPExcel->getSheet(0);
 
-                $subjects = Subject::find()->where(['id' => $model->subject_id])->all();
-                $class = Contact::findOne($model->class_id);
-                $students = ContactDetail::find()->where(['contact_id' => $model->class_id])->all();
+                // validate choose exam room
+                $examRoom = ExamRoom::findOne(['id' => $model->exam_room_id]);
+                $exam = Exam::findOne(['id' => $examRoom->exam_id]);
 
-                // validate class
-                if (is_null($class)) {
-                    Yii::$app->getSession()->setFlash('error', 'Lớp chưa tạo trên hệ thống');
-                    return;
+                if (is_null($examRoom)) {
+                    Yii::$app->getSession()->setFlash('error', 'Bạn chưa chọn phòng để tải file mẫu');
+                    return $this->redirect(['view-exam-mark-room']);
                 }
 
-                // set semester
-                $title_ = $sheet->getCell('A1')->getValue();
-                $sheet->setCellValue('A1', $title_ = str_replace("[semester]", $model->semester == 1 ? "1" : "2", $title_));
-                $sheet->setCellValue('A1', $title_ = str_replace("[class]", $class->contact_name, $title_));
-                $sheet->mergeCells('A1:' . chr(ord('C') + count($subjects)) . '1');
-                $sheet->getStyle('A1')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+                // set exam
+                $title_ = $sheet->getCell('B1')->getValue();
+                $sheet->setCellValue('B1', $title_ = str_replace("[exam]", $exam->name, $title_));
 
-                // set sheet name
-                $sheet->setTitle("TKHK" . $model->semester . '-' . $class->contact_name);
+                // set room
+                $title_ = $sheet->getCell('B3')->getValue();
+                $sheet->setCellValue('B3', $title_ = str_replace("[room]", $examRoom->name, $title_));
 
-                $column = ord('D');
+                // set start_date
+                $title_ = $sheet->getCell('D3')->getValue();
+                $sheet->setCellValue('D3', $title_ = str_replace("[start_date]", date("d-m-Y", $exam->start_date), $title_));
+
+                $column = ord('F');
                 $styleHeader = array(
-                    'fill' => array(
-                        'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                        'color' => array('rgb' => '0070C0')
-                    ),
-                    'font' => array(
-                        'color' => array('rgb' => 'FFFFFF'),
-                        'size' => 13
-                    ),
-                    'alignment' => array(
-                        'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER
-                    ),
                     'borders' => array(
                         'allborders' => array(
                             'style' => PHPExcel_Style_Border::BORDER_THIN
                         )
-                    )
-                );
-
-                $styleRow = array(
+                    ),
                     'font' => array(
-                        'size' => 13
+                        'size' => 9
+                    ),
+                    'alignment' => array(
+                        'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER
                     ),
                 );
 
-                // set mark summary
-                $sheet->setCellValue('C2', 'Điểm tổng kết');
-                $sheet->setCellValue('C3', 'HK' . $model->semester);
-                $sheet->getStyle('C2')->applyFromArray($styleHeader);
-                $sheet->getStyle('C3')->applyFromArray($styleHeader);
+                $styleRow = array(
+                    'borders' => array(
+                        'allborders' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    ),
+                    'font' => array(
+                        'size' => 9
+                    ),
+                );
 
-                // set mark summary subject
+                // find subjects
+                $subjectExamRoomIds = DetailExamRoom::find()
+                    ->select('subject_id')
+                    ->where(['exam_room_id' => $examRoom->id])
+                    ->all();
+                $subjectIds = array();
+                foreach ($subjectExamRoomIds as $subjectExamRoomId) {
+                    array_push($subjectIds, $subjectExamRoomId['subject_id']);
+                }
+                $subjects = Subject::find()
+                    ->where(['id' => $subjectIds])
+                    ->orderBy('name')
+                    ->all();
+
                 $subjects_column = array();
                 foreach ($subjects as $item) {
-                    $sheet->setCellValue(chr($column) . '2', $item->name);
-                    $sheet->setCellValue(chr($column) . '3', 'HK' . $model->semester);
-                    $sheet->getStyle(chr($column) . '2')->applyFromArray($styleHeader);
-                    $sheet->getStyle(chr($column) . '3')->applyFromArray($styleHeader);
+                    $sheet->setCellValue(chr($column) . '4', $item->name);
+                    $sheet->getStyle(chr($column) . '4')->applyFromArray($styleHeader);
                     $subjects_column[$item->id] = chr($column);
                     $column++;
                 }
 
+                // Tổng điểm
+                $sheet->setCellValue(chr($column) . '4', 'Tổng điểm');
+                $sheet->getStyle(chr($column) . '4')->applyFromArray($styleHeader);
+                $column++;
+
+                // Trung bình
+                $sheet->setCellValue(chr($column) . '4', 'Trung bình');
+                $sheet->getStyle(chr($column) . '4')->applyFromArray($styleHeader);
+                $column++;
+
+                // XL
+                $sheet->setCellValue(chr($column) . '4', 'Xếp loại');
+                $sheet->getStyle(chr($column) . '4')->applyFromArray($styleHeader);
+                $column++;
+
+                // Xếp hạng
+                $sheet->setCellValue(chr($column) . '4', 'Xếp hạng');
+                $sheet->getStyle(chr($column) . '4')->applyFromArray($styleHeader);
+
                 $row = 0;
-                $students_id = array();
-                foreach ($students as $item) {
-                    array_push($students_id, $item->id);
+                $examStudentRooms = ExamStudentRoom::find()
+                    ->select('exam_student_room.*, contact.contact_name')
+                    ->leftJoin('contact_detail', 'contact_detail.id = exam_student_room.student_id')
+                    ->leftJoin('contact', 'contact.id = contact_detail.contact_id')
+                    ->where(['exam_student_room.exam_room_id' => $examRoom->id])
+                    ->all();
+
+                $studentIds = array();
+                foreach ($examStudentRooms as $examStudentRoom) {
+                    array_push($studentIds, $examStudentRoom->student_id);
                 }
 
-                $marks_summary_tmp = MarkSummary::find()->where(['student_id' => $students_id, 'class_id' => $model->class_id, 'semester' => $model->semester])->all();
-                $marks_summary = array();
+                foreach ($examStudentRooms as $examStudentRoom) {
+                    $sheet->setCellValue('B' . ($row + 5), $row + 1);
+                    $sheet->setCellValue('C' . ($row + 5), $examStudentRoom->student_name);
+                    $sheet->setCellValue('D' . ($row + 5), $examStudentRoom->identification);
+                    $sheet->setCellValue('E' . ($row + 5), $examStudentRoom->contact_name);
 
-                foreach ($marks_summary_tmp as $item) {
-                    $marks_summary[$item->student_id] = $item;
-                }
-
-                foreach ($students as $item) {
-
-                    $sheet->setCellValue('A' . ($row + 4), $row + 1);
-                    $sheet->setCellValue('B' . ($row + 4), $item->fullname);
-                    $sheet->getStyle('A' . ($row + 4))->applyFromArray($styleRow);
-                    $sheet->getStyle('B' . ($row + 4))->applyFromArray($styleRow);
-
-                    if (!isset($marks_summary[$item->id])) {
-                        $row++;
-                        continue;
-                    }
-
-                    $marks = $marks_summary[$item->id]->marks;
-                    $marks = explode(';', $marks);
+                    $marks = explode(';', $examStudentRoom->marks);
                     foreach ($marks as $mark) {
                         $tmp = explode(':', $mark);
                         if (isset($subjects_column[$tmp[0]])) {
-                            $sheet->setCellValue($subjects_column[$tmp[0]] . ($row + 4), $tmp[1]);
-                            $sheet->getStyle($subjects_column[$tmp[0]] . ($row + 4))->applyFromArray($styleRow);
+                            $sheet->setCellValue($subjects_column[$tmp[0]] . ($row + 5), $tmp[1]);
+                            $sheet->getStyle($subjects_column[$tmp[0]] . ($row + 5))->applyFromArray($styleRow);
                         }
                     }
+
+                    $mark_char = ord('F');
+                    $sheet->setCellValue(chr($mark_char + count($subjects)) . ($row + 5), $examStudentRoom->mark_summary);
+                    $sheet->setCellValue(chr($mark_char + count($subjects) + 1) . ($row + 5), $examStudentRoom->mark_avg);
+
+                    $type = '';
+                    if ($examStudentRoom->mark_type == MarkType::MARK_TYPE_GIOI) {
+                        $type = 'Giỏi';
+                    } else if ($examStudentRoom->mark_type == MarkType::MARK_TYPE_KHA) {
+                        $type = 'Khá';
+                    } else if ($examStudentRoom->mark_type == MarkType::MARK_TYPE_TB) {
+                        $type = 'Trung bình';
+                    } else if ($examStudentRoom->mark_type == MarkType::MARK_TYPE_YEU) {
+                        $type = 'Yếu';
+                    } else if ($examStudentRoom->mark_type == MarkType::MARK_TYPE_KEM) {
+                        $type = 'Kém';
+                    }
+
+                    $sheet->setCellValue(chr($mark_char + count($subjects) + 2) . ($row + 5), $type);
+                    $sheet->setCellValue(chr($mark_char + count($subjects) + 3) . ($row + 5), $examStudentRoom->mark_rank);
+
+                    $sheet->getStyle('B' . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle('C' . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle('D' . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle('E' . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle(chr($mark_char + count($subjects)) . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle(chr($mark_char + count($subjects) + 1) . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle(chr($mark_char + count($subjects) + 2) . ($row + 5))->applyFromArray($styleRow);
+                    $sheet->getStyle(chr($mark_char + count($subjects) + 3) . ($row + 5))->applyFromArray($styleRow);
                     $row++;
                 }
 
-                // set file name upload
-                $file_name_upload = "Danh_sach_diem_tong_ket_hoc_ky_";
-                $file_name_upload = $file_name_upload . ($model->semester) . ".xls";
+                // set file name export
+                $file_name_upload = "Điểm_kỳ_thi_";
+                $file_name_upload = $file_name_upload . $exam->name;
+                $file_name_upload = $file_name_upload . "_phòng_" . $examRoom->name;
+                $file_name_upload = $file_name_upload . ".xls";
 
                 header("Content-Length: " . filesize($file));
                 header("Content-type: application/octet-stream");
@@ -854,6 +955,167 @@ class ExamController extends Controller
         } else {
             Yii::$app->getSession()->setFlash('error', 'File is not exits');
         }
-        return $this->redirect(['index']);
+        return $this->redirect(['view-exam-mark-room']);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function actionCalculator()
+    {
+
+        try {
+            $exam_id = Yii::$app->getRequest()->getQueryParam('exam_id');
+
+            // validate choose exam room
+            $examRooms = ExamRoom::find()
+                ->where(['exam_id' => $exam_id])
+                ->all();
+
+            $examRoomIds = array();
+            foreach ($examRooms as $examRoom) {
+                array_push($examRoomIds, $examRoom->id);
+            }
+
+            $examStudentRooms = ExamStudentRoom::find()
+                ->where(['exam_room_id' => $examRoomIds])
+                ->all();
+
+            $arrayMarkAvg = array();
+            $markTypes = MarkType::find()->all();
+            $types = array();
+            foreach ($markTypes as $markType) {
+                $types[$markType->type] = $markType->mark;
+            }
+
+            foreach ($examStudentRooms as $examStudentRoom) {
+                $marks = explode(';', $examStudentRoom->marks);
+                $markSummary = 0;
+                $subjectNum = 0;
+                foreach ($marks as $mark) {
+                    $tmp = explode(':', $mark);
+                    if (isset($tmp[0]) && isset($tmp[1])) {
+                        $markSummary += floatval($tmp[1]);
+                        $subjectNum++;
+                    }
+                }
+                $examStudentRoom->mark_summary = $markSummary;
+                $examStudentRoom->mark_avg = ($markSummary / $subjectNum);
+                $arrayMarkAvg[$examStudentRoom->exam_room_id][$examStudentRoom->mark_avg] = $examStudentRoom->mark_avg;
+                $examStudentRoom->save(false);
+            }
+
+            // sort array mark avg
+            foreach ($examRooms as $examRoom) {
+                krsort($arrayMarkAvg[$examRoom->id]);
+                $stt = 1;
+                foreach ($arrayMarkAvg[$examRoom->id] as $item) {
+                    $arrayMarkAvg[$examRoom->id][$item] = $stt;
+                    $stt++;
+                }
+            }
+
+            // set rank
+            foreach ($examStudentRooms as $examStudentRoom) {
+                $examStudentRoom->mark_rank = $arrayMarkAvg[$examStudentRoom->exam_room_id][$examStudentRoom->mark_avg];
+
+                // set type
+                if ($examStudentRoom->mark_avg >= $types[MarkType::MARK_TYPE_GIOI]) {
+                    $examStudentRoom->mark_type = MarkType::MARK_TYPE_GIOI;
+                } else if ($examStudentRoom->mark_avg >= $types[MarkType::MARK_TYPE_KHA]
+                    && $examStudentRoom->mark_avg < $types[MarkType::MARK_TYPE_GIOI]
+                ) {
+                    $examStudentRoom->mark_type = MarkType::MARK_TYPE_KHA;
+                } else if ($examStudentRoom->mark_avg >= $types[MarkType::MARK_TYPE_TB]
+                    && $examStudentRoom->mark_avg < $types[MarkType::MARK_TYPE_KHA]
+                ) {
+                    $examStudentRoom->mark_type = MarkType::MARK_TYPE_TB;
+                } else if ($examStudentRoom->mark_avg >= $types[MarkType::MARK_TYPE_YEU]
+                    && $examStudentRoom->mark_avg < $types[MarkType::MARK_TYPE_TB]
+                ) {
+                    $examStudentRoom->mark_type = MarkType::MARK_TYPE_YEU;
+                } else {
+                    $examStudentRoom->mark_type = MarkType::MARK_TYPE_KEM;
+                }
+                $examStudentRoom->save(false);
+            }
+        } catch (Exception $ex) {
+            Yii::$app->getSession()->setFlash('error', 'Tính toán lỗi! Vui lòng kiểm tra phần nhập điểm');
+        }
+
+        return $this->actionViewExamMarkRoom();
+    }
+
+    /**
+     *
+     */
+    public function actionConfigMarkType()
+    {
+        $value = Yii::$app->request->post('MarkType');
+        $markTypes = MarkType::find()->all();
+        foreach ($markTypes as $markType) {
+            if ($markType->type == MarkType::MARK_TYPE_GIOI) {
+                $markType->mark = $value['mark_gioi'];
+            } else if ($markType->type == MarkType::MARK_TYPE_KHA) {
+                $markType->mark = $value['mark_kha'];
+            } else if ($markType->type == MarkType::MARK_TYPE_TB) {
+                $markType->mark = $value['mark_tb'];
+            } else if ($markType->type == MarkType::MARK_TYPE_YEU) {
+                $markType->mark = $value['mark_yeu'];
+            } else {
+                $markType->mark = $value['mark_kem'];
+            }
+            $markType->updated_at = time();
+            $markType->updated_by = Yii::$app->user->id;
+            $markType->save(false);
+        }
+    }
+
+    /**
+     *
+     */
+    public function actionUpdateQueueDetailExamRoom()
+    {
+        if (isset($_POST['hasEditable'])) {
+
+            $post = Yii::$app->request->post();
+            if ($post['editableKey']) {
+                $id = $post['editableKey'];
+                $index = $post['editableIndex'];
+
+                $queueDetailExamRoom = QueueDetailExamRoom::find()
+                    ->where(['id' => $id])
+                    ->one();
+
+                // location
+                if (isset($post['QueueDetailExamRoom'][$index]['location'])) {
+                    $content = $post['QueueDetailExamRoom'][$index]['location'];
+                    $queueDetailExamRoom->location = $content;
+                }
+
+                // supervisory
+                if (isset($post['QueueDetailExamRoom'][$index]['supervisory'])) {
+                    $content = $post['QueueDetailExamRoom'][$index]['supervisory'];
+                    $queueDetailExamRoom->supervisory = $content;
+                }
+
+//                if (isset($post['QueueDetailExamRoom'][$index]['location'])) {
+//                    $content = $post['QueueDetailExamRoom'][$index]['location'];
+//                    $queueDetailExamRoom->location = $content;
+//                }
+//
+//                if (isset($post['QueueDetailExamRoom'][$index]['location'])) {
+//                    $content = $post['QueueDetailExamRoom'][$index]['location'];
+//                    $queueDetailExamRoom->location = $content;
+//                }
+
+                if ($queueDetailExamRoom->save(false)) {
+                    echo Json::encode(['output' => '', 'message' => '']);
+                }
+            }
+        } else {
+            echo Json::encode(['output' => '', 'message' => '']);
+        }
+        return;
     }
 }

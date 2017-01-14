@@ -13,6 +13,10 @@ use Yii;
  * @property string $identification
  * @property integer $exam_room_id
  * @property string $marks
+ * @property string $mark_summary
+ * @property string $mark_avg
+ * @property string $mark_rank
+ * @property string $mark_type
  * @property integer $created_at
  * @property integer $updated_at
  * @property integer $created_by
@@ -31,6 +35,7 @@ class ExamStudentRoom extends \yii\db\ActiveRecord
     public $exam_id;
     public $action;
     public $file;
+    public $contact_name;
 
     /**
      * @inheritdoc
@@ -38,9 +43,9 @@ class ExamStudentRoom extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['student_id', 'exam_id', 'exam_room_id', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
+            [['student_id', 'exam_id', 'exam_room_id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'mark_type', 'mark_rank'], 'integer'],
             [['student_name'], 'string', 'max' => 255],
-            [['identification', 'action'], 'string', 'max' => 25],
+            [['identification', 'action', 'mark_summary', 'mark_avg'], 'string', 'max' => 25],
             [['marks', 'file'], 'string', 'max' => 1024],
         ];
     }
