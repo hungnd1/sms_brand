@@ -194,12 +194,6 @@ $this->registerJs("Layout.init();");
                     'url' => ['history-contact/create', 'type' => 2],
                     'require_auth' => true,
                 ],
-                [
-                    'encode' => false,
-                    'label' => '<i class="fa fa-server"></i> Sinh nhật trong tháng ' . date('m'),
-                    'url' => ['contact-detail/birthday'],
-                    'require_auth' => true,
-                ],
 
             ]
         ],
@@ -243,23 +237,11 @@ $this->registerJs("Layout.init();");
             ]
         ],
         [
-            'label' => 'Báo cáo thông kê và lịch sử,tìm kiếm',
+            'label' => 'Lịch sử,tìm kiếm',
             'url' => 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
             'items' => [
-                [
-                    'encode' => false,
-                    'label' => '<i class="fa fa-server"></i> Báo cáo ngày',
-                    'url' => ['contact-detail/report'],
-                    'require_auth' => true,
-                ],
-                [
-                    'encode' => false,
-                    'label' => '<i class="fa fa-server"></i> Báo cáo tháng',
-                    'url' => ['contact-detail/report-month'],
-                    'require_auth' => true,
-                ],
                 [
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Tìm kiếm',
@@ -336,6 +318,32 @@ $this->registerJs("Layout.init();");
                     'encode' => false,
                     'label' => '<i class="fa fa-server"></i> Lịch sử lên lớp',
                     'url' => ['history-class-up/index'],
+                    'require_auth' => true,
+                ],
+            ]
+        ],
+        [
+            'label' => 'Báo cáo thống kê',
+            'url' => 'javascript:;',
+            'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
+            'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
+            'items' => [
+                [
+                    'encode' => false,
+                    'label' => '<i class="fa fa-server"></i> Sinh nhật trong tháng ' . date('m'),
+                    'url' => ['contact-detail/birthday'],
+                    'require_auth' => true,
+                ],
+                [
+                    'encode' => false,
+                    'label' => '<i class="fa fa-server"></i> Báo cáo ngày',
+                    'url' => ['contact-detail/report'],
+                    'require_auth' => true,
+                ],
+                [
+                    'encode' => false,
+                    'label' => '<i class="fa fa-server"></i> Báo cáo tháng',
+                    'url' => ['contact-detail/report-month'],
                     'require_auth' => true,
                 ],
             ]
