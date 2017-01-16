@@ -26,6 +26,8 @@ class QueueExamRoom extends \yii\db\ActiveRecord
         return 'queue_exam_room';
     }
 
+    public $grade, $studentPerRoom;
+
     /**
      * @inheritdoc
      */

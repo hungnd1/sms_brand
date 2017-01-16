@@ -11,6 +11,10 @@ namespace common\models;
 
 class SMSBrandUtil
 {
+    /**
+     * @param $classes
+     * @return array
+     */
     public static function getGrades($classes)
     {
         $result = array();
@@ -25,9 +29,27 @@ class SMSBrandUtil
                     break;
                 }
             }
-            $result[$grade] = 'Khối '. $grade;
+            $result[$grade] = 'Khối ' . $grade;
         }
         ksort($result);
         return $result;
+    }
+
+    /**
+     * @param $className
+     * @return string
+     */
+    public static function getGradeByNameClass($className)
+    {
+        $arrClassName = str_split($className);
+        $grade = '';
+        for ($i = 0; $i < count($arrClassName); $i++) {
+            if (ord($arrClassName[$i]) >= ord('0') && ord($arrClassName[$i]) <= ord('9')) {
+                $grade = $grade . $arrClassName[$i];
+            } else {
+                break;
+            }
+        }
+        return $grade;
     }
 }

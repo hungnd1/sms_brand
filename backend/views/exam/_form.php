@@ -1,6 +1,7 @@
 <?php
 
 use common\assets\ToastAsset;
+use kartik\widgets\TouchSpin;
 use yii\bootstrap\Modal;
 use yii\helpers\Html;
 use kartik\widgets\ActiveForm;
@@ -25,6 +26,8 @@ $tableSubjectId = "tableSubjectId";
 $tableClassId = "tableClassId";
 $createQueueRooms = \yii\helpers\Url::to(['exam/create-queue-rooms']);
 $deleteQueueRooms = \yii\helpers\Url::to(['exam/delete-queue-rooms']);
+$mixing = Html::getInputId($model, 'mixing');
+$studentPerRoom = Html::getInputId($queueExamRoomModel, 'studentPerRoom');
 
 $js = <<<JS
 
@@ -68,10 +71,17 @@ $js = <<<JS
     function createRoom(){
         subjects = $("#$tableSubjectId").yiiGridView("getSelectedRows");
         classes = $("#$tableClassId").yiiGridView("getSelectedRows");
-    
+        mixing = $("#$mixing").val();
+        studentPerRoom = $("#$studentPerRoom").val();
+        
+        //
+        if(mixing==2 && studentPerRoom <=0 ){
+            toastr.error("Số học sinh/phòng phải lớn không");
+        }
+            
         jQuery.post(
                 '{$createQueueRooms}',
-                {subjectIds:subjects, classIds:classes}
+                {mixing:mixing, studentPerRoom: studentPerRoom, subjectIds:subjects, classIds:classes}
             )
             .done(function(result) {
                 $("#grid-subjects-id").html(result);
@@ -82,6 +92,19 @@ $js = <<<JS
                 toastr.error("server error");
         });
     }
+    
+    $("#$mixing").change(function () {
+        var mixing = $("#$mixing").val();
+        if(mixing==1){
+            $("#sts_add").hide();
+            $("#sts_p").hide();
+            $("#sts_grade").hide();
+        } else {
+            $("#sts_add").show();
+            $("#sts_p").show();
+            $("#sts_grade").show();
+        }
+    });
 JS;
 
 $this->registerJs($js, View::POS_END);
@@ -94,7 +117,7 @@ $this->registerJs($js, View::POS_END);
 
     .exam-room {
         border: solid 1px #DDD;
-        height: 99%;
+        height: 420px;
     }
 
     .exam-room h5 {
@@ -112,10 +135,15 @@ $this->registerJs($js, View::POS_END);
     }
 
     .div_rooms {
-        height: 200px;
+        height: 215px;
+        overflow-y: scroll;
         width: 95%;
         margin: 0 0 15px 2.5%;
         border: 1px solid rgb(204, 204, 204) !important;
+    }
+
+    #sts_p {
+        width: 280px;
     }
 
 </style>
@@ -168,7 +196,7 @@ $this->registerJs($js, View::POS_END);
                 <?=
                 $form->field($model, 'mixing')->widget(Select2::classname(), [
                     'hideSearch' => true,
-                    'data' => [1 => 'Trong khối', 2 => 'Theo lớp'],
+                    'data' => [1 => 'Theo lớp', 2 => 'Trong khối'],
                     'pluginOptions' => [
                         'allowClear' => false,
                         'width' => '150px'
@@ -231,8 +259,52 @@ $this->registerJs($js, View::POS_END);
                 <div class="exam-room">
                     <h5>Trộn phòng thi</h5>
                     <div style="margin: 5px 0 5px 2.5%">
+                        <div id="sts_p" style="display: none">
+                            <?php
+                            echo $form->field($queueExamRoomModel, 'studentPerRoom')->widget(TouchSpin::classname(), [
+                                'pluginOptions' => [
+                                    'id' => 'abc',
+                                    'max' => 1000,
+                                    'verticalbuttons' => true,
+                                    'prefix' => 'Số thí sinh/phòng',
+                                    'verticalupclass' => 'glyphicon glyphicon-plus',
+                                    'verticaldownclass' => 'glyphicon glyphicon-minus'
+                                ]
+                            ])->label(false); ?>
+                        </div>
                         <?= Html::button('Tạo mới', ['class' => 'btn btn-success', 'onclick' => 'createRoom();']) ?>
                         <?= Html::button('Cấu hình SBD', ['class' => 'btn btn-success', 'onclick' => 'showConfigSBD();']) ?>
+
+
+                        <table width="100%" style="margin: 10px 0 5px 15px; display: none" id="sts_add">
+                            <tr>
+                                <td width="5%">Khối:</td>
+                                <td width="15%">
+                                    <?=
+                                    $form->field($queueExamRoomModel, 'grade')->widget(Select2::classname(), [
+                                        'data' => [1 => '10'],
+                                        'pluginOptions' => [
+                                            'allowClear' => false
+                                        ],
+                                    ])->label(false);
+                                    ?>
+                                </td>
+                                <td width="30%">
+                                    <?php
+                                    echo $form->field($queueExamRoomModel, 'number_student')->widget(TouchSpin::classname(), [
+                                        'pluginOptions' => [
+                                            'max' => 1000,
+                                            'verticalbuttons' => true,
+                                            'prefix' => 'Số thí sinh',
+                                            'verticalupclass' => 'glyphicon glyphicon-plus',
+                                            'verticaldownclass' => 'glyphicon glyphicon-minus'
+                                        ]
+                                    ])->label(false); ?>
+                                </td>
+                                <td><?= Html::button('Thêm', ['class' => 'btn btn-primary', 'style' => 'margin: 0 0 8px 0', 'id' => 'button_start_school_year']) ?></td>
+                            </tr>
+                        </table>
+
                     </div>
 
                     <div class="div_rooms" id="div_rooms">
@@ -270,6 +342,11 @@ $this->registerJs($js, View::POS_END);
                                 ],
                             ],
                         ]); ?>
+                    </div>
+
+                    <div style="margin-left: 17px" id="sts_grade">
+                        <p>Học sinh chưa thuộc phòng</p>
+                        <p>Khối 11:|Khối 11:|Khối 11:|</p>
                     </div>
                 </div>
             </td>
