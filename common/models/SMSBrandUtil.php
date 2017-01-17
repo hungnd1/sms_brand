@@ -52,4 +52,17 @@ class SMSBrandUtil
         }
         return $grade;
     }
+
+    /**
+     * @return false|string
+     */
+    public static function getCurrentSchoolYear()
+    {
+        $year = date("Y");
+        $month = date("m");
+        if ($month < 6) {
+            $year--;
+        }
+        return $year;
+    }
 }

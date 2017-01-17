@@ -26,8 +26,11 @@ $tableSubjectId = "tableSubjectId";
 $tableClassId = "tableClassId";
 $createQueueRooms = \yii\helpers\Url::to(['exam/create-queue-rooms']);
 $deleteQueueRooms = \yii\helpers\Url::to(['exam/delete-queue-rooms']);
+$addQueueRooms = \yii\helpers\Url::to(['exam/add-queue-rooms']);
 $mixing = Html::getInputId($model, 'mixing');
 $studentPerRoom = Html::getInputId($queueExamRoomModel, 'studentPerRoom');
+$grade = Html::getInputId($queueExamRoomModel, 'grade');
+$number_student = Html::getInputId($queueExamRoomModel, 'number_student');
 
 $js = <<<JS
 
@@ -49,14 +52,30 @@ $js = <<<JS
     
     // delte queue room
     function  deleteQueueRoom(exam_room_id) {
+         mixing = $("#$mixing").val();
          jQuery.post(
                 '{$deleteQueueRooms}',
-                {exam_room_id:exam_room_id}
+                {mixing: mixing, exam_room_id:exam_room_id}
             )
             .done(function(result) {
                 $("#grid-subjects-id").html(result);
-                var div_room_new = $("#div_rooms_new").html();
-                $("#div_rooms").html(div_room_new);
+                $("#div_rooms").html($("#div_rooms_new").html());
+                $("#div_rooms_new").html("");
+                
+                if(mixing == 2){
+                    // show number student per grade
+                    $("#sts_grade").html($("#sts_grade_new").html());
+                    $("#sts_grade_new").html("");
+                    
+                    // show add queue room
+                    if($("#isShowAdd").text() == 0){
+                        $("#sts_add").hide();
+                    } else {
+                        $("#sts_add").html($("#sts_add_new").html());
+                        $("#sts_add_new").html("");
+                        $("#sts_add").show();
+                    }
+                }
             })
             .fail(function() {
                 toastr.error("server error");
@@ -77,6 +96,7 @@ $js = <<<JS
         //
         if(mixing==2 && studentPerRoom <=0 ){
             toastr.error("Số học sinh/phòng phải lớn không");
+            return;
         }
             
         jQuery.post(
@@ -85,8 +105,55 @@ $js = <<<JS
             )
             .done(function(result) {
                 $("#grid-subjects-id").html(result);
-                var div_room_new = $("#div_rooms_new").html();
-                $("#div_rooms").html(div_room_new);
+                $("#div_rooms").html($("#div_rooms_new").html());
+                $("#div_rooms_new").html("");
+                
+                if(mixing==2){
+                    $("#sts_grade").html($("#sts_grade_new").html());
+                    $("#sts_grade_new").html("");
+                    $("#sts_add").html($("#sts_add_new").html());
+                    $("#sts_add_new").html("");
+                   
+                    if($("#isShowAdd").text() == 0){
+                        $("#sts_add").hide();
+                    }
+                }
+            })
+            .fail(function() {
+                toastr.error("server error");
+        });
+    }
+    
+    // add
+    function addRoom(){
+        subjects = $("#$tableSubjectId").yiiGridView("getSelectedRows");
+        numberStudent = $("#$number_student").val();
+        grade = $("#$grade").val();
+        
+        //
+        if(numberStudent <=0 ){
+            toastr.error("Số thí sinh phải lớn không");
+            return;
+        }
+            
+        jQuery.post(
+                '{$addQueueRooms}',
+                {grade:grade, numberStudent: numberStudent, subjectIds:subjects}
+            )
+            .done(function(result) {
+                $("#grid-subjects-id").html(result);
+                $("#div_rooms").html($("#div_rooms_new").html());
+                $("#div_rooms_new").html("");
+
+                $("#sts_grade").html($("#sts_grade_new").html());
+                $("#sts_grade_new").html("");
+                $("#sts_add").html($("#sts_add_new").html());
+                $("#sts_add_new").html("");
+              
+                if($("#isShowAdd").text() == 0){
+                    $("#sts_add").hide();
+                }
+                
             })
             .fail(function() {
                 toastr.error("server error");
@@ -100,7 +167,6 @@ $js = <<<JS
             $("#sts_p").hide();
             $("#sts_grade").hide();
         } else {
-            $("#sts_add").show();
             $("#sts_p").show();
             $("#sts_grade").show();
         }
@@ -263,7 +329,6 @@ $this->registerJs($js, View::POS_END);
                             <?php
                             echo $form->field($queueExamRoomModel, 'studentPerRoom')->widget(TouchSpin::classname(), [
                                 'pluginOptions' => [
-                                    'id' => 'abc',
                                     'max' => 1000,
                                     'verticalbuttons' => true,
                                     'prefix' => 'Số thí sinh/phòng',
@@ -275,37 +340,10 @@ $this->registerJs($js, View::POS_END);
                         <?= Html::button('Tạo mới', ['class' => 'btn btn-success', 'onclick' => 'createRoom();']) ?>
                         <?= Html::button('Cấu hình SBD', ['class' => 'btn btn-success', 'onclick' => 'showConfigSBD();']) ?>
 
-
-                        <table width="100%" style="margin: 10px 0 5px 15px; display: none" id="sts_add">
-                            <tr>
-                                <td width="5%">Khối:</td>
-                                <td width="15%">
-                                    <?=
-                                    $form->field($queueExamRoomModel, 'grade')->widget(Select2::classname(), [
-                                        'data' => [1 => '10'],
-                                        'pluginOptions' => [
-                                            'allowClear' => false
-                                        ],
-                                    ])->label(false);
-                                    ?>
-                                </td>
-                                <td width="30%">
-                                    <?php
-                                    echo $form->field($queueExamRoomModel, 'number_student')->widget(TouchSpin::classname(), [
-                                        'pluginOptions' => [
-                                            'max' => 1000,
-                                            'verticalbuttons' => true,
-                                            'prefix' => 'Số thí sinh',
-                                            'verticalupclass' => 'glyphicon glyphicon-plus',
-                                            'verticaldownclass' => 'glyphicon glyphicon-minus'
-                                        ]
-                                    ])->label(false); ?>
-                                </td>
-                                <td><?= Html::button('Thêm', ['class' => 'btn btn-primary', 'style' => 'margin: 0 0 8px 0', 'id' => 'button_start_school_year']) ?></td>
-                            </tr>
+                        <table style="margin: 10px 0 5px 15px; display: none" id="sts_add">
                         </table>
-
                     </div>
+
 
                     <div class="div_rooms" id="div_rooms">
                         <?= GridView::widget([
@@ -345,8 +383,6 @@ $this->registerJs($js, View::POS_END);
                     </div>
 
                     <div style="margin-left: 17px" id="sts_grade">
-                        <p>Học sinh chưa thuộc phòng</p>
-                        <p>Khối 11:|Khối 11:|Khối 11:|</p>
                     </div>
                 </div>
             </td>

@@ -3,6 +3,9 @@
 use kartik\editable\Editable;
 use kartik\grid\GridView;
 use kartik\helpers\Html;
+use kartik\widgets\ActiveForm;
+use kartik\widgets\Select2;
+use kartik\widgets\TouchSpin;
 use yii\helpers\Url;
 use yii\web\View;
 
@@ -63,6 +66,7 @@ use yii\web\View;
             'editableOptions' => [
                 'header' => 'Địa điểm',
                 'size' => 'sm',
+                'asPopover' => false,
                 'formOptions' => [
                     'action' => Url::to(['exam/update-queue-detail-exam-room'])
                 ]
@@ -80,10 +84,10 @@ use yii\web\View;
             'editableOptions' => [
                 'header' => 'Giáo viên coi thi',
                 'size' => 'sm',
+                'asPopover' => false,
                 'formOptions' => [
                     'action' => Url::to(['exam/update-queue-detail-exam-room'])
                 ]
-
             ]
         ],
         // Exam hours
@@ -96,6 +100,7 @@ use yii\web\View;
             'contentOptions' => ['class' => 'kv-sticky-column'],
             'editableOptions' => [
                 'header' => 'Giờ thi',
+                'asPopover' => false,
                 'size' => 'sm',
                 'formOptions' => [
                     'action' => Url::to(['exam/update-queue-detail-exam-room'])
@@ -169,4 +174,49 @@ use yii\web\View;
             ],
         ],
     ]); ?>
+</div>
+
+
+<?php $form = ActiveForm::begin([
+    'type' => ActiveForm::TYPE_HORIZONTAL,
+    'formConfig' => [
+        'deviceSize' => ActiveForm::SIZE_SMALL,
+    ]
+]); ?>
+
+<table width="100%" style="margin: 10px 0 5px 15px; display: none" id="sts_add_new">
+    <tr>
+        <td width="5%">Khối:</td>
+        <td width="17%">
+            <?php
+                $tmp = array();
+                foreach ($grades as $grade){
+                    $tmp[$grade] = $grade;
+                }
+                echo $form->field($queueExamRoomModel, 'grade')->dropDownList($tmp)->label(false);
+            ?>
+        </td>
+        <td width="5%">Số thí sinh: </td>
+        <td width="163px">
+            <?= $form->field($queueExamRoomModel, 'number_student')->textInput()->label(false) ?>
+        </td>
+        <td><?= Html::button('Thêm', ['class' => 'btn btn-primary', 'style' => 'margin: 0 0 8px 0', 'onclick' => 'addRoom()']) ?></td>
+    </tr>
+</table>
+<?php ActiveForm::end(); ?>
+
+<div style="margin-left: 17px; display: none" id="sts_grade_new">
+    <p>Học sinh chưa thuộc phòng</p>
+    <p id="isShowAdd" style="display: none"><?= count($studentInGradeDelete) ?></p>
+    <p>
+        <?php
+        $grades = array_keys($studentInGrade);
+        $tmp = '';
+        foreach ($grades as $grade) {
+            $studentInGradeDeleteCount = isset($studentInGradeDelete[$grade]) ? count($studentInGradeDelete[$grade]) : 0;
+            $tmp = $tmp . 'Khối ' . $grade . ': ' . $studentInGradeDeleteCount . '/' . count($studentInGrade[$grade]) . '|';
+        }
+        echo substr($tmp, 0, -1);
+        ?>
+    </p>
 </div>

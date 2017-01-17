@@ -40,15 +40,16 @@ $this->params['breadcrumbs'][] = 'Công việc trong năm';
             <div class="portlet-body">
 
                 <div class="top-notice">
-                    Năm học hiện tại : <?= date("Y") . ' - ' . (date("Y") + 1) ?>.
-                    Nhà trường đã thực hiện kết thúc năm học <?= (date("Y") - 1) . ' - ' . date("Y") ?>.
+                    <?php $year = \common\models\SMSBrandUtil::getCurrentSchoolYear(); ?>
+                    Năm học hiện tại : <?= $year . ' - ' . ($year + 1) ?>.
+                    Nhà trường đã thực hiện kết thúc năm học <?= ($year - 1) . ' - ' . $year ?>.
                     Nhà trường
                     <?php
                     if ($schoolYearStatus == 0) echo 'chưa bắt đầu';
                     else if ($schoolYearStatus == 1) echo 'đã bắt đầu';
                     else echo 'đã kết thúc';
                     ?>
-                    năm học <?= date("Y") . ' - ' . (date("Y") + 1) ?>
+                    năm học <?= $year . ' - ' . ($year + 1) ?>
                 </div>
 
                 <div style="margin: 25px 0 25px 0">
