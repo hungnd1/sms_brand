@@ -59,12 +59,29 @@ $this->params['breadcrumbs'][] = $this->title;
                         [
                             'class' => 'kartik\grid\EditableColumn',
                             'attribute' => 'comment',
+                            'width' => '60%',
                             'label' => 'Nhận xét',
                             'pageSummary' => 'Page Total',
                             'vAlign'=>'middle',
                             'headerOptions'=>['class'=>'kv-sticky-column'],
                             'contentOptions'=>['class'=>'kv-sticky-column'],
-                            'editableOptions'=>['header'=>'Nhận xét', 'size'=>'md']
+                            'editableOptions'=>['header'=>'Nhận xét', 'size'=>'md'],
+                            'value' => function ($model, $key, $index, $widget) {
+                                /** @var $model \common\models\Comment */
+                                $listComment = explode(',',$model->comment);
+                                $string = '';
+                                $i = 0;
+                                $listComments = \common\models\TemplateComment::find()->andWhere(['in','id',$listComment])
+                                    ->andWhere(['status'=>\common\models\TemplateComment::STATUS_ACTIVE])->all();
+                                if($listComments){
+                                    foreach($listComments as $item){
+                                        /** @var $item \common\models\TemplateComment */
+                                        $string .= '('.$listComment[$i].') '.$item->comment.'<br>';
+                                        $i++;
+                                    }
+                                }
+                                return $string;
+                            }
                         ],
                         [
                             'class' => 'kartik\grid\EditableColumn',
