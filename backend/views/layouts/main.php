@@ -145,7 +145,7 @@ $this->registerJs("Layout.init();");
             ]
         ],
         [
-            'label' => 'Quản lý tài khoản',
+            'label' => 'QL tài khoản',
             'url' > 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
@@ -193,7 +193,7 @@ $this->registerJs("Layout.init();");
         ],
 
         [
-            'label' => 'Quản lý danh bạ',
+            'label' => 'QL danh bạ',
             'url' => 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
@@ -257,7 +257,7 @@ $this->registerJs("Layout.init();");
             ]
         ],
         [
-            'label' => 'Quản lý môn học và điểm',
+            'label' => 'QL môn học và điểm',
             'url' => 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
@@ -283,14 +283,14 @@ $this->registerJs("Layout.init();");
             ]
         ],
         [
-            'label' => 'Quản lý kỳ thi',
+            'label' => 'QL kỳ thi',
             'url' => 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
             'items' => [
                 [
                     'encode' => false,
-                    'label' => '<i class="fa fa-server"></i> Tạo mới kỳ thi',
+                    'label' => '<i class="fa fa-server"></i> Tạo kỳ thi',
                     'url' => ['exam/view-create'],
                     'require_auth' => true,
                 ],
@@ -303,7 +303,7 @@ $this->registerJs("Layout.init();");
             ]
         ],
         [
-            'label' => 'Quản lý năm học',
+            'label' => 'QL năm học',
             'url' => 'javascript:;',
             'options' => ['class' => 'menu-dropdown mega-menu-dropdown'],
             'linkOptions' => ['data-hover' => 'megamenu-dropdown', 'data-close-others' => 'true'],
@@ -330,7 +330,7 @@ $this->registerJs("Layout.init();");
             'items' => [
                 [
                     'encode' => false,
-                    'label' => '<i class="fa fa-server"></i> Nhật ký gửi SMS',
+                    'label' => '<i class="fa fa-server"></i> Nhật ký SMS',
                     'url' => ['history-contact/index'],
                     'require_auth' => true,
                 ],
