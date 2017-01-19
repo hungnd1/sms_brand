@@ -8,9 +8,16 @@
 
 namespace common\models;
 
+use SoapClient;
+use yii\base\Exception;
 
 class SMSBrandUtil
 {
+    const URL = "http://g3g4.vn/smsws/services/SendMT?wsdl";
+    const USERNAME = "";
+    const PASSWORD = "";
+    const LOAI_SP = 2;
+
     /**
      * @param $classes
      * @return array
@@ -65,4 +72,35 @@ class SMSBrandUtil
         }
         return $year;
     }
+
+    /**
+     * send message
+     * @param $brandname
+     * @param $receiver
+     * @param $content
+     * @param $target
+     * @return string
+     */
+    public static function sentSMS($brandname, $receiver, $content, $target)
+    {
+        $errCode = '999|System error';
+        try {
+            $client = new SoapClient(SMSBrandUtil::URL);
+            $sendSMS = array(
+                'username' => SMSBrandUtil::USERNAME,
+                'password' => SMSBrandUtil::PASSWORD,
+                'receiver' => $receiver,
+                'content' => $content,
+                'loaisp' => SMSBrandUtil::LOAI_SP,
+                'brandname' => $brandname,
+                'target' => $target
+            );
+
+            $errCode = $client->sendSMS($sendSMS)->return;
+        } catch (Exception $exception) {
+        }
+        return $errCode;
+    }
 }
+
+?>

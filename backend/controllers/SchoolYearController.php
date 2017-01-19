@@ -33,13 +33,22 @@ class SchoolYearController extends Controller
         $schoolYearStatus = SchoolYear::getSchoolYearStatus();
 
         if ($model->load(Yii::$app->request->post())) {
-            $classes = Contact::getAllClasses($model->grade)->orderBy('contact_name')->all();
+            $classes = Contact::getAllClasses($model->grade)
+                ->orderBy('contact_name')
+                ->all();
+
+            if (strcmp($model->action, 'fromGrade') == 0) {
+                $model->class = '';
+            }
+
             $dataProvider = new ActiveDataProvider([
-                'query' => Contact::getAllClasses($model->grade, $model->class)->orderBy('contact_name')
+                'query' => Contact::getAllClasses($model->grade, $model->class)
+                    ->orderBy('contact_name')
             ]);
         } else {
             $dataProvider = new ActiveDataProvider([
-                'query' => Contact::getAllClasses()->orderBy('contact_name')
+                'query' => Contact::getAllClasses()
+                    ->orderBy('contact_name')
             ]);
         }
 
@@ -64,6 +73,7 @@ class SchoolYearController extends Controller
         if ($model->load(Yii::$app->request->post())) {
 
             $classes = Contact::getAllClasses($model->grade, $model->class)
+                ->andWhere('contact_name != \'' . Contact::STUDENT_GRADUATED . '\'')
                 ->orderBy(['contact_name' => SORT_DESC])
                 ->all();
 
@@ -110,7 +120,7 @@ class SchoolYearController extends Controller
                 // update end school year
                 $class->school_year_status = Contact::END_SCHOOL_YEAR;
                 $class->save(false);
-                if ($isNewClass){
+                if ($isNewClass) {
                     $newClass->school_year_status = Contact::END_SCHOOL_YEAR;
                     $newClass->save(false);
                 }
@@ -121,6 +131,7 @@ class SchoolYearController extends Controller
     }
 
     /**
+     * action start school year
      * @return string
      */
     public function actionStartSchoolYear()
@@ -129,7 +140,9 @@ class SchoolYearController extends Controller
 
         if ($model->load(Yii::$app->request->post())) {
 
-            $classes = Contact::getAllClasses($model->grade, $model->class)->all();
+            $classes = Contact::getAllClasses($model->grade, $model->class)
+                ->andWhere('contact_name != \'' . Contact::STUDENT_GRADUATED . '\'')
+                ->all();
 
             foreach ($classes as $class) {
                 $class->school_year_status = Contact::START_SCHOOL_YEAR;

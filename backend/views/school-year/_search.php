@@ -13,10 +13,12 @@ $class = Html::getInputId($model, 'class');
 
 $js = <<<JS
     $("#$grade").change(function () {
+        $('#action').val('fromGrade');
         $("#my_form").submit();
     });
 
     $("#$class").change(function () {
+        $('#action').val('fromClass');
         $("#my_form").submit();
     });
 
@@ -42,6 +44,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
     ]); ?>
 
     <div class="form-group">
+        <?= $form->field($model, 'action')->hiddenInput(['id' => 'action', 'value' => ''])->label(false) ?>
         <table>
             <tr>
                 <td style="padding-right: 10px">

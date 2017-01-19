@@ -16,6 +16,7 @@ class SchoolYear extends \yii\db\ActiveRecord
 {
     public $grade;
     public $class;
+    public $action;
 
     /**
      * @inheritdoc
@@ -23,7 +24,7 @@ class SchoolYear extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['grade', 'class'], 'string'],
+            [['grade', 'class', 'action'], 'string'],
         ];
     }
 
@@ -33,10 +34,14 @@ class SchoolYear extends \yii\db\ActiveRecord
      */
     public static function getSchoolYearStatus()
     {
-        $classes = Contact::getAllClasses()->all();
+        $classes = Contact::getAllClasses()
+            ->andWhere('contact_name != \'' . Contact::STUDENT_GRADUATED . '\'')
+            ->all();
         $countNoneStartSchoolYear = 0;
         foreach ($classes as $class) {
-            if (is_null($class->school_year_status)) {
+            if (is_null($class->school_year_status)
+                || $class->school_year_status == Contact::NONE_START_SCHOOL_YEAR
+            ) {
                 $countNoneStartSchoolYear++;
             } else if ($class->school_year_status == Contact::START_SCHOOL_YEAR) {
                 return Contact::START_SCHOOL_YEAR;
