@@ -76,7 +76,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 if($listComments){
                                     foreach($listComments as $item){
                                         /** @var $item \common\models\TemplateComment */
-                                        $string .= '('.$listComment[$i].') '.$item->comment.'<br>';
+                                        $string .= '('.$listComment[$i].') '.$item->comment.' ';
                                         $i++;
                                     }
                                 }
