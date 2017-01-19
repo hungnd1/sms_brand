@@ -347,6 +347,7 @@ class ContactDetailController extends BaseBEController
                 $timestamp = strtotime('today midnight');
                 $index = $post['editableIndex'];
                 $create_at_end = $timestamp + (60 * 60 * 24);
+
                 $comment = Comment::find()
                     ->andWhere(['id_contact_detail' => $id])
                     ->andWhere(['is_month' => Comment::NOT_MONTH])
@@ -356,13 +357,7 @@ class ContactDetailController extends BaseBEController
                 if ($comment) {
                     if (isset($post['ContactDetail'][$index]['comment'])) {
                         $content = $post['ContactDetail'][$index]['comment'];
-                        $commentuser = TemplateComment::findOne(['id'=>$content]);
-                        if($commentuser){
-                            $comment->content = $commentuser->comment;
-                        }else{
-                            $comment->content = $content;
-                        }
-
+                        $comment->content = $content;
                     }
                     if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
                         $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
@@ -378,12 +373,7 @@ class ContactDetailController extends BaseBEController
                     $comment->is_month = Comment::NOT_MONTH;
                     if (isset($post['ContactDetail'][$index]['comment'])) {
                         $content = $post['ContactDetail'][$index]['comment'];
-                        $commentuser = TemplateComment::findOne(['id'=>$content]);
-                        if($commentuser){
-                            $comment->content = $commentuser->comment;
-                        }else{
-                            $comment->content = $content;
-                        }
+                        $comment->content = $content;
                     }
                     if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
                         $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
@@ -428,12 +418,7 @@ class ContactDetailController extends BaseBEController
                 if ($comment) {
                     if (isset($post['ContactDetail'][$index]['comment'])) {
                         $content = $post['ContactDetail'][$index]['comment'];
-                        $commentuser = TemplateComment::findOne(['id'=>$content]);
-                        if($commentuser){
-                            $comment->content = $commentuser->comment;
-                        }else{
-                            $comment->content = $content;
-                        }
+                        $comment->content = $content;
                     }
                     if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
                         $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];
@@ -449,12 +434,7 @@ class ContactDetailController extends BaseBEController
                     $comment->is_month = Comment::IS_MONTH;
                     if (isset($post['ContactDetail'][$index]['comment'])) {
                         $content = $post['ContactDetail'][$index]['comment'];
-                        $commentuser = TemplateComment::findOne(['id'=>$content]);
-                        if($commentuser){
-                            $comment->content = $commentuser->comment;
-                        }else{
                             $comment->content = $content;
-                        }
                     }
                     if (isset($post['ContactDetail'][$index]['comment_bonus'])) {
                         $comment->content_bonus = $post['ContactDetail'][$index]['comment_bonus'];

@@ -1,4 +1,6 @@
 <?php
+use backend\widgets\Footer;
+use backend\widgets\Header;
 use common\assets\MetronicLoginAsset;
 use common\widgets\Alert;
 use yii\helpers\Html;
@@ -20,32 +22,21 @@ $this->registerJs("Layout.init();");
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
     <meta content="" name="description"/>
     <meta content="" name="author"/>
+    <link href="<?= Url::to("@web/ncss.css") ?>" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="<?= Url::to("@web/awesome/css/font-awesome.min.css") ?>"/>
+    <link rel="stylesheet" href="<?= Url::to("@web/w3.css") ?>"/>
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
 </head>
-<body class="login">
+<body >
 <?php $this->beginBody() ?>
-<div class="logo">
-    <a href="index.html">
-        <img src="<?= Url::to("@web/img/logo-big.png"); ?>" alt=""/>
-    </a>
-</div>
-<div class="menu-toggler sidebar-toggler">
-</div>
 
-<!-- BEGIN CONTAINER -->
-<div class="content">
-    <?= Alert::widget() ?>
-    <?= $content ?>
-</div>
-<!-- END CONTAINER -->
+<?= Header::widget([]) ?>
 
-<!-- BEGIN FOOTER -->
-<div class="copyright">
-        2015 &copy;
-</div>
-<!-- END FOOTER -->
+<?= $content ?>
+
+<?= Footer::widget([]) ?>
 
 <?php $this->endBody() ?>
 </body>
