@@ -24,8 +24,8 @@ class Contact extends \yii\db\ActiveRecord
     const NONE_START_SCHOOL_YEAR = 0;
     const START_SCHOOL_YEAR = 1;
     const END_SCHOOL_YEAR = 2;
+    const STUDENT_GRADUATED = 'Học sinh tốt nghiệp';
     public $file;
-    public $school_year_status;
 
     /**
      * @inheritdoc
@@ -69,7 +69,7 @@ class Contact extends \yii\db\ActiveRecord
     {
         if (is_null($oldClass)) return '';
 
-        $newClass = 'Học sinh tốt nghiệp';
+        $newClass = Contact::STUDENT_GRADUATED;
         $grade = self::getGradeByClassName($oldClass);
 
         if ($grade < 12) {

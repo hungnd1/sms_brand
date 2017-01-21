@@ -1,5 +1,6 @@
 <?php
 
+use kartik\widgets\Spinner;
 use yii\bootstrap\Modal;
 use yii\helpers\Html;
 use kartik\grid\GridView;
@@ -18,11 +19,11 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
     function showClass(id) {
         $.ajax({
             url: '?r=history-class-up%2Fshow&id=' + id,
-            success: function(data) {
+            success: function (data) {
                 $('#myModalContent').html(data);
+                $('#popupClass').modal('show');
             }
         });
-        $('#popupClass').modal('show');
     }
 </script>
 
@@ -36,7 +37,7 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
         text-align: center;
     }
 
-    .modal-header{
+    .modal-header {
         padding: 10px 10px 0 0;
     }
 </style>
@@ -75,7 +76,6 @@ $this->params['breadcrumbs'][] = 'Lịch sử lên lớp';
                         'grades' => $grades,
                     ]) ?>
                 </div>
-
 
                 <?= GridView::widget([
                     'dataProvider' => $dataProvider,

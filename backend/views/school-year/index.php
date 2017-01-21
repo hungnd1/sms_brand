@@ -94,8 +94,8 @@ $this->params['breadcrumbs'][] = 'Công việc trong năm';
                                 if($numStudents==0){
                                     $rs = '<p>Chưa cập nhập danh sách học sinh</p>';
                                 }
-                                if ($model->school_year_status == 0) $rs = $rs . '<p>Chưa bắt đầu';
-                                else if ($model->school_year_status == 1) $rs = $rs . '<p>Đã bắt đầu';
+                                if ($model->school_year_status == \common\models\Contact::NONE_START_SCHOOL_YEAR) $rs = $rs . '<p>Chưa bắt đầu';
+                                else if ($model->school_year_status == \common\models\Contact::START_SCHOOL_YEAR) $rs = $rs . '<p>Đã bắt đầu';
                                 else $rs = $rs . '<p>Đã kết thúc';
 
                                 $rs = $rs . ' năm học</p>';
