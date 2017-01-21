@@ -61,7 +61,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <div id="text_conten">
                                         <b>SMS Brandname</b> là gì?<br>
                                         Vì sao nên sử dụng SMS Brandname?<br>
-                                        <a href="<?= Url::toRoute(['site/services', 'id' => $item->id, 'type' => $item->type]) ?>"
+                                        <a href=""
                                            style="font-family:Arial, Helvetica, sans-serif; font-size:12px; font-weight:normal; margin-left:0px;"><font
                                                 color="#0077ca">Chi tiết</font></a>
                                     </div>
