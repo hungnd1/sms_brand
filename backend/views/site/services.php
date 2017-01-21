@@ -66,7 +66,7 @@ use yii\helpers\Url;
                             <!--p class="w3-center"><button onclick="location.href='/sms/login.jsp';" class="w3-btn w3-round-xlarge w3-hover-pink w3-green w3-border w3-border-red">&#272;&#259;ng nh&#7853;p</button></p-->
                             <div id="user_com">
                                 <ul>
-                                    <li><a href="javascript: Register();">&#272;&#259;ng ký &#273;&#7841;i lý</a></li>
+                                    <li><a href="<?= Url::toRoute(['site/register']) ?>">&#272;&#259;ng ký &#273;&#7841;i lý</a></li>
                                 </ul>
                             </div>
                             <div id="img5"><img src="imgs/img5.jpg"/></div>
