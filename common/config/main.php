@@ -9,6 +9,7 @@ $config = [
         '@example' => 'static/example',
         '@file_template' => 'static/file_template',
         '@default_site_id' => 1,
+        '@content_images' => 'content_images/'
     ],
     'components' => [
         'cache' => [

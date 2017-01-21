@@ -2,6 +2,7 @@
 use backend\assets\AppAsset;
 use common\models\ContactDetail;
 use common\models\KodiCategory;
+use common\models\News;
 use common\widgets\Alert;
 use common\widgets\Nav;
 use common\widgets\NavBar;
@@ -141,6 +142,42 @@ $this->registerJs("Layout.init();");
                     'label' => '<i class="icon-lock-open"></i> QL nhóm quyền',
                     'url' => ['rbac-backend/role'],
                     'require_auth' => true,
+                ],
+                [
+                    'encode' => false,
+                    'label' => '<i class="icon-users"></i> Quản lý tin tức',
+                    'items' => [
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Tin tức'),
+                            'url' => ['news/index','type'=>News::TYPE_TINTUC],
+                            'require_auth' => true,
+                        ],
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>'.Yii::t('app','Dịch vụ'),
+                            'url' => ['news/index','type'=>News::TYPE_DICHVU],
+                            'require_auth' => true,
+                        ],
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>' . Yii::t('app', 'Đại lý'),
+                            'url' => ['news/index','type'=>News::TYPE_DAILY],
+                            'require_auth' => true,
+                        ],
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>' . Yii::t('app', 'Hướng dẫn'),
+                            'url' => ['news/index','type'=>News::TYPE_HUONGDAN],
+                            'require_auth' => true,
+                        ],
+                        [
+                            'encode' => false,
+                            'label' => '<i class="icon-film"></i>' . Yii::t('app', 'Liên hệ'),
+                            'url' => ['news/index','type'=>News::TYPE_LIENHE],
+                            'require_auth' => true,
+                        ],
+                    ]
                 ],
             ]
         ],

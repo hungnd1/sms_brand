@@ -21,12 +21,14 @@ $js = <<<JS
     });
 
     $('#button_end_school_year').click(function(){
-       $('#my_form').attr('action', '/sms_brand/backend/web/index.php?r=school-year%2Fend-school-year');
+    var url = document.getElementById('end_school').value;
+       $('#my_form').attr('action', url);
        $("#my_form").submit();
     });
 
     $('#button_start_school_year').click(function(){
-       $('#my_form').attr('action', '/sms_brand/backend/web/index.php?r=school-year%2Fstart-school-year');
+        var url = document.getElementById('start_school').value;
+       $('#my_form').attr('action', url);
        $("#my_form").submit();
     });
 JS;
@@ -43,6 +45,10 @@ $this->registerJs($js, \yii\web\View::POS_READY);
 
     <div class="form-group">
         <table>
+            <tr>
+                <input id="start_school" type="hidden" value="<?= \yii\helpers\Url::toRoute(['school-year/start-school-year']) ?>">
+                <input id="end_school" type="hidden" value="<?= \yii\helpers\Url::toRoute(['school-year/end-school-year']) ?>">
+            </tr>
             <tr>
                 <td style="padding-right: 10px">
                     <?=

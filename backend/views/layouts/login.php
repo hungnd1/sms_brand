@@ -40,5 +40,51 @@ $this->registerJs("Layout.init();");
 
 <?php $this->endBody() ?>
 </body>
+<script type="text/javascript">
+//    $(function() {
+//        var loc = window.location.href;
+//        $('.menu-web a').each(function() {
+//            $(this).removeClass('current');
+////            var link = $(this).find('first').attr('href');
+////            alert(loc.indexOf(link));
+//            if(loc.indexOf(link) > 0)
+//                $(this).addClass('current');
+//        });
+//    });
+
+</script>
 </html>
 <?php $this->endPage() ?>
+
+<script type="text/javascript">
+    function login_click() {
+        var username = document.getElementById('username').value;
+        var password = document.getElementById('passWord').value;
+        if (username == '') {
+            alert('Bạn chưa nhập tên đăng nhập');
+            return;
+        }
+        if (password == '') {
+            alert('Bạn chưa nhập mật khẩu');
+            return;
+        }
+        $.ajax({
+            type: 'POST',
+            url: '<?= Url::toRoute(['site/login-cms']) ?>',
+            beforeSend: function () {
+                //code;
+            },
+            data: {username: username, password: password},
+            success: function (data) {
+                var responseJSON = jQuery.parseJSON(data);
+                if (responseJSON.status == "ok") {
+                    location.href = '<?= Url::toRoute(['site/index']) ?>';
+                }
+                else {
+                    alert('Đăng nhập không thành công');
+                    location.reload();
+                }
+            }
+        });
+    }
+</script>
