@@ -1,6 +1,7 @@
 <?php
 
 use common\assets\ToastAsset;
+use kartik\widgets\Spinner;
 use kartik\widgets\TouchSpin;
 use yii\bootstrap\Modal;
 use yii\helpers\Html;
@@ -40,9 +41,9 @@ $js = <<<JS
             url: '?r=exam%2Fshow-exam-student-room&id=' + id,
             success: function(data) {
                 $('#myModalContent').html(data);
+                $('#popupClass').modal('show');
             }
         });
-        $('#popupClass').modal('show');
     }
 
     // show config sbd popup
@@ -53,6 +54,10 @@ $js = <<<JS
     // delte queue room
     function  deleteQueueRoom(exam_room_id) {
          mixing = $("#$mixing").val();
+         
+         // show block wait
+        showBlockUI();
+         
          jQuery.post(
                 '{$deleteQueueRooms}',
                 {mixing: mixing, exam_room_id:exam_room_id}
@@ -79,7 +84,10 @@ $js = <<<JS
             })
             .fail(function() {
                 toastr.error("server error");
-        });
+            })
+            .always(function() {
+                $.unblockUI();
+            });
     }
     
     // sumbit form
@@ -87,11 +95,40 @@ $js = <<<JS
         $("#create-form-id").submit();
     }
 
+    function showBlockUI() {
+      // show block wait
+        $.blockUI({ 
+            message: '<h2>Vui lòng chờ...</h2>',
+            css: { 
+	            border: 'none', 
+	            padding: '15px', 
+	            backgroundColor: '#000', 
+	            '-webkit-border-radius': '10px', 
+	            '-moz-border-radius': '10px', 
+	            opacity: .5, 
+	            color: '#fff'
+	        }
+		});		
+    }
+    
     function createRoom(){
+    
         subjects = $("#$tableSubjectId").yiiGridView("getSelectedRows");
         classes = $("#$tableClassId").yiiGridView("getSelectedRows");
         mixing = $("#$mixing").val();
         studentPerRoom = $("#$studentPerRoom").val();
+        
+        // chọn subject
+        if(subjects == ''){
+            toastr.error("Vui lòng chọn môn thi");
+            return;
+        }
+        
+        // chọn classes
+        if(classes == ''){
+            toastr.error("Vui lòng chọn lớp");
+            return;
+        }
         
         //
         if(mixing==2 && studentPerRoom <=0 ){
@@ -99,6 +136,9 @@ $js = <<<JS
             return;
         }
             
+        // show block wait
+        showBlockUI(); 
+        
         jQuery.post(
                 '{$createQueueRooms}',
                 {mixing:mixing, studentPerRoom: studentPerRoom, subjectIds:subjects, classIds:classes}
@@ -121,7 +161,10 @@ $js = <<<JS
             })
             .fail(function() {
                 toastr.error("server error");
-        });
+             })
+             .always(function() {
+                $.unblockUI();
+             });
     }
     
     // add
@@ -135,6 +178,9 @@ $js = <<<JS
             toastr.error("Số thí sinh phải lớn không");
             return;
         }
+        
+        // show block wait
+        showBlockUI();
             
         jQuery.post(
                 '{$addQueueRooms}',
@@ -157,7 +203,10 @@ $js = <<<JS
             })
             .fail(function() {
                 toastr.error("server error");
-        });
+            })
+            .always(function() {
+                $.unblockUI();
+             });
     }
     
     $("#$mixing").change(function () {
@@ -227,11 +276,11 @@ $this->registerJs($js, View::POS_END);
 
     <table style="margin-top: 20px">
         <tr>
-            <td style="padding-right: 10px;">Tên kỳ thi</td>
+            <td style="padding: 0 10px 0 20px">Tên kỳ thi</td>
             <td>
                 <?= $form->field($model, 'name')->textInput(['style' => 'width: 150px'])->label(false) ?>
             </td>
-            <td style="padding-right: 10px">Thời điểm thi</td>
+            <td style="padding: 0 10px 0 20px">Thời điểm thi</td>
             <td>
                 <?=
                 $form->field($model, 'semester')->widget(Select2::classname(), [
@@ -244,7 +293,7 @@ $this->registerJs($js, View::POS_END);
                 ])->label(false);
                 ?>
             </td>
-            <td style="padding-right: 10px">Ngày bắt đầu</td>
+            <td style="padding: 0 10px 0 20px">Ngày bắt đầu</td>
             <td>
                 <?=
                 $form->field($model, 'start_date')->widget(\kartik\date\DatePicker::className(), [

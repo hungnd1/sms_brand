@@ -1,5 +1,6 @@
 <?php
 
+use common\models\Contact;
 use kartik\widgets\ActiveForm;
 use kartik\widgets\FileInput;
 use kartik\widgets\Select2;
@@ -98,7 +99,7 @@ use yii\helpers\Html;
     <?=
     $form->field($model, 'class_id')->widget(Select2::classname(), [
         'id' => 'class_id',
-        'data' => \yii\helpers\ArrayHelper::map(\common\models\Contact::getAllClasses(), 'id', 'contact_name'),
+        'data' => \yii\helpers\ArrayHelper::map(Contact::getAllClasses()->andWhere('contact_name != \'' . Contact::STUDENT_GRADUATED . '\'')->all(), 'id', 'contact_name'),
         'pluginOptions' => [
             'allowClear' => true,
             'width' => '50%'

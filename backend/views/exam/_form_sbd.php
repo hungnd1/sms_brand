@@ -46,11 +46,11 @@ use kartik\widgets\ActiveForm;
         </tr>
         <tr>
             <td><?= $form->field($model, 'isPrefix')->checkbox(['label' => 'Thêm tiền tố']) ?></td>
-            <td><?= $form->field($model, 'prefix')->textInput(['maxlength' => 300])->label(false) ?></td>
+            <td style="padding-left: 20px"><?= $form->field($model, 'prefix')->textInput(['maxlength' => 300])->label(false) ?></td>
         </tr>
         <tr>
             <td><?= $form->field($model, 'isLenght')->checkbox(['label' => 'Chiều dài đánh số']) ?></td>
-            <td>
+            <td style="padding-left: 20px">
                 <?php
                 $a = [1 => '1', 2 => '2', 3 => '3', 4 => '4', 5 => '5'];
                 echo $form->field($model, 'lenght')->dropDownList($a)->label(false);

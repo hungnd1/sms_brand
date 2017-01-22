@@ -53,7 +53,9 @@ class MarkController extends BaseBEController
     {
         $dataProvider = new ArrayDataProvider();
         $model = new Mark();
-        $classes = Contact::getAllClasses()->all();
+        $classes = Contact::getAllClasses()
+            ->andWhere('contact_name != \'' . Contact::STUDENT_GRADUATED . '\'')
+            ->all();
         $subjects = Subject::find()->all();
         $dataContact = ArrayHelper::map($classes, 'id', 'contact_name');
         $dataSubject = ArrayHelper::map($subjects, 'id', 'name');
@@ -344,13 +346,13 @@ class MarkController extends BaseBEController
                 $students = ContactDetail::find()->where(['contact_id' => $model->class_id])->all();
 
                 // validate choose subject
-                if (!is_array($model->class_id)) {
+                if (count($class) <= 0) {
                     Yii::$app->getSession()->setFlash('error', 'Bạn chưa chọn môn học');
                     return $this->redirect(['index']);
                 }
 
                 // validate choose subject
-                if (!is_array($model->subject_id)) {
+                if (count($subject) <= 0) {
                     Yii::$app->getSession()->setFlash('error', 'Bạn chưa chọn lớp');
                     return $this->redirect(['index']);
                 }

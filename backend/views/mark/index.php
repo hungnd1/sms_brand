@@ -30,7 +30,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <p>
                     <?php if (!Yii::$app->params['tvod1Only']) echo Html::a("Tải lên điểm môn học", Yii::$app->urlManager->createUrl(['/mark/view-upload']), ['class' => 'btn btn-success']) ?>
                     <?php if (!Yii::$app->params['tvod1Only']) echo Html::a("Xuất điểm môn học", Yii::$app->urlManager->createUrl(['/mark/view-export']), ['class' => 'btn btn-success']) ?>
-                    <?php if (!Yii::$app->params['tvod1Only']) echo Html::a("Gửi điểm", Yii::$app->urlManager->createUrl(['/mark/view-export']), ['class' => 'btn btn-success']) ?>
+<!--                    --><?php /*if (!Yii::$app->params['tvod1Only']) echo Html::a("Gửi điểm", Yii::$app->urlManager->createUrl(['/mark/view-export']), ['class' => 'btn btn-success']) */?>
 
                 </p>
 

@@ -11,6 +11,7 @@ use Yii;
  * @property string $name
  * @property double $mark
  * @property double $type
+ * @property string $ip
  * @property integer $created_at
  * @property integer $updated_at
  * @property integer $created_by
@@ -26,7 +27,11 @@ class MarkType extends \yii\db\ActiveRecord
         return 'mark_type';
     }
 
-    public $mark_gioi, $mark_kha, $mark_tb, $mark_yeu, $mark_kem;
+    public $mark_gioi = 8;
+    public $mark_kha = 7;
+    public $mark_tb = 5;
+    public $mark_yeu = 4;
+    public $mark_kem = 3;
     const MARK_TYPE_GIOI = 1;
     const MARK_TYPE_KHA = 2;
     const MARK_TYPE_TB = 3;
@@ -42,7 +47,7 @@ class MarkType extends \yii\db\ActiveRecord
             [['mark'], 'number'],
             [['mark_gioi', 'mark_kha', 'mark_tb', 'mark_yeu', 'mark_kem'], 'number'],
             [['created_at', 'updated_at', 'created_by', 'updated_by', 'type'], 'integer'],
-            [['name'], 'string', 'max' => 50],
+            [['name', 'ip'], 'string', 'max' => 50],
         ];
     }
 }

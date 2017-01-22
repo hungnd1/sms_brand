@@ -171,7 +171,12 @@ Modal::begin([
 ]);
 
 $model = new \common\models\MarkType();
-$markTypes = MarkType::find()->all();
+$markTypes = MarkType::find()
+    ->where([
+        'ip' => Yii::$app->request->getUserIP(),
+        'created_by' => Yii::$app->user->id
+    ])
+    ->all();
 foreach ($markTypes as $markType) {
     if ($markType->type == MarkType::MARK_TYPE_GIOI) {
         $model->mark_gioi = $markType->mark;

@@ -65,6 +65,7 @@ class ExamController extends Controller
         $dataExams = ArrayHelper::map($exams, 'id', 'name');
         if (count($exams) < 1) {
             Yii::$app->getSession()->setFlash('error', 'Kì thi chưa được tạo trên hệ thống');
+            return $this->actionViewCreate();
         }
 
         $model = new ExamStudentRoom();
@@ -130,7 +131,9 @@ class ExamController extends Controller
 
         // classes
         $classes = new ActiveDataProvider([
-            'query' => Contact::getAllClasses()->orderBy('contact_name')
+            'query' => Contact::getAllClasses()
+                ->andWhere('contact_name != \'' . Contact::STUDENT_GRADUATED . '\'')
+                ->orderBy('contact_name')
         ]);
         $classes->pagination = false;
 
@@ -1311,7 +1314,12 @@ class ExamController extends Controller
                 ->all();
 
             $arrayMarkAvg = array();
-            $markTypes = MarkType::find()->all();
+            $markTypes = MarkType::find()
+                ->where([
+                    'ip' => Yii::$app->request->getUserIP(),
+                    'created_by' => Yii::$app->user->id
+                ])
+                ->all();
             $types = array();
             foreach ($markTypes as $markType) {
                 $types[$markType->type] = $markType->mark;
@@ -1381,7 +1389,44 @@ class ExamController extends Controller
     public function actionConfigMarkType()
     {
         $value = Yii::$app->request->post('MarkType');
-        $markTypes = MarkType::find()->all();
+        $markTypes = MarkType::find()
+            ->where([
+                'ip' => Yii::$app->request->getUserIP(),
+                'created_by' => Yii::$app->user->id
+            ])
+            ->all();
+
+        if (count($markTypes) <= 0) {
+            for ($i = 1; $i <= 5; $i++) {
+                $markType = new MarkType();
+                if ($i == MarkType::MARK_TYPE_GIOI) {
+                    $markType->mark = $value['mark_gioi'];
+                    $markType->name = 'Giỏi';
+                    $markType->type = MarkType::MARK_TYPE_GIOI;
+                } else if ($i == MarkType::MARK_TYPE_KHA) {
+                    $markType->mark = $value['mark_kha'];
+                    $markType->name = 'Khá';
+                    $markType->type = MarkType::MARK_TYPE_KHA;
+                } else if ($i == MarkType::MARK_TYPE_TB) {
+                    $markType->mark = $value['mark_tb'];
+                    $markType->name = 'Trung bình';
+                    $markType->type = MarkType::MARK_TYPE_TB;
+                } else if ($i == MarkType::MARK_TYPE_YEU) {
+                    $markType->mark = $value['mark_yeu'];
+                    $markType->name = 'Yếu';
+                    $markType->type = MarkType::MARK_TYPE_YEU;
+                } else {
+                    $markType->mark = $value['mark_kem'];
+                    $markType->name = 'Kém';
+                    $markType->type = MarkType::MARK_TYPE_KEM;
+                }
+                $markType->ip = Yii::$app->request->getUserIP();
+                $markType->created_at = time();
+                $markType->created_by = Yii::$app->user->id;
+                $markType->save(false);
+            }
+        }
+
         foreach ($markTypes as $markType) {
             if ($markType->type == MarkType::MARK_TYPE_GIOI) {
                 $markType->mark = $value['mark_gioi'];
